@@ -81,9 +81,9 @@ kernel-adogta-frontend/
 
 ## Versionamiento
 
-**Versión actual:** `0.0.1`
+**Versión actual:** `2.0.0`
 
-Esta versión representa el punto de partida del frontend: el proyecto existe, compila y levanta correctamente, aunque aún no tiene funcionalidades de negocio implementadas.
+Esta versión representa el punto de partida del frontend: el proyecto existe, compila y levanta correctamente. Se ha implementado la interfaz y el módulo de Login. Las demás funcionalidades de negocio se encuentran en desarrollo.
 
 ## Equipo
 
