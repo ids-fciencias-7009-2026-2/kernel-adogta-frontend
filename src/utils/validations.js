@@ -84,6 +84,31 @@ export const validateRegisterForm = (formData) => {
   return errors;
 };
 
+// Validación del formulario de edición de perfil
+export const validateEditProfileForm = (formData) => {
+  const errors = {};
+  
+  const nombreError = validateNombre(formData.nombres, 'Nombres');
+  if (nombreError) errors.nombres = nombreError;
+  
+  const apellidoPaternoError = validateNombre(formData.apellidoPaterno, 'Apellido paterno');
+  if (apellidoPaternoError) errors.apellidoPaterno = apellidoPaternoError;
+
+  const apellidoMaternoError = validateNombre(formData.apellidoMaterno, 'Apellido materno');
+  if (apellidoMaternoError) errors.apellidoMaterno = apellidoMaternoError;
+  
+  const emailError = validateEmail(formData.email);
+  if (emailError) errors.email = emailError;
+  
+  const codigoPostalError = validateCodigoPostal(formData.codigoPostal);
+  if (codigoPostalError) errors.codigoPostal = codigoPostalError;
+  
+  const telefonoError = validateTelefono(formData.telefono);
+  if (telefonoError) errors.telefono = telefonoError;
+  
+  return errors;
+};
+
 // Validar formulario de login
 export const validateLoginForm = (formData) => {
   const errors = {};

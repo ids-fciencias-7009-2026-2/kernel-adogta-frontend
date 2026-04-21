@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import { usuarioApi } from '../api/usuarioApi';
+import { useForm } from '../hooks/useForm';
+import { validateEditProfileForm } from '../utils/validations';
 
 /**
  * Modal para editar perfil de usuario
@@ -11,17 +13,40 @@ import { usuarioApi } from '../api/usuarioApi';
  * @param {function} onUpdate - Función al actualizar (recibe nuevos datos)
  */
 const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
-  // Estado del formulario
-  const [formData, setFormData] = useState({
-    nombres: '',
-    apellidoPaterno: '',
-    apellidoMaterno: '',
-    email: '',
-    telefono: '',
-    codigoPostal: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  // Función de envío al backend
+  const onSubmit = async (data) => {
+    const updatedUser = await usuarioApi.updateUsuario(data);
+    onUpdate(updatedUser);
+    onClose();
+  };
+
+  // Manejo de errores del API
+  const handleApiError = (error) => {
+    return error.response?.data?.message || 'Error al actualizar el perfil';
+  };
+
+  // Hook useForm
+  const {
+    formData,
+    errors,
+    loading,
+    serverError,
+    handleChange,
+    handleSubmit,
+    setFormData
+  } = useForm(
+    {
+      nombres: '',
+      apellidoPaterno: '',
+      apellidoMaterno: '',
+      email: '',
+      telefono: '',
+      codigoPostal: ''
+    },
+    validateEditProfileForm,
+    onSubmit,
+    handleApiError
+  );
 
   // Cuando el modal se abre, llena el formulario con los datos del usuario
   useEffect(() => {
@@ -35,33 +60,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
         codigoPostal: userData.codigoPostal || ''
       });
     }
-  }, [isOpen, userData]);
-
-  // Actualiza formData cuando el usuario escribe
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  // Envía los cambios al backend
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const updatedUser = await usuarioApi.updateUsuario(formData);
-      onUpdate(updatedUser);
-      onClose();
-    } catch (err) {
-      console.error('Error al actualizar:', err);
-      setError(err.response?.data?.message || 'Error al actualizar el perfil');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isOpen, userData, setFormData]);
 
   // Si el modal está cerrado, no renderiza nada
   if (!isOpen) return null;
@@ -87,10 +86,17 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
           </button>
         </div>
 
-        {/* Mensaje de error */}
-        {error && (
+        {/* Mensaje de error del servidor */}
+        {serverError && (
           <div className="bg-[#FEF2F0] text-adogta-secondary px-3 py-2.5 mx-6 my-4 rounded-lg text-[13px] text-center">
-            {error}
+            {serverError}
+          </div>
+        )}
+
+        {/* Mensaje de error de validación general */}
+        {Object.keys(errors).length > 0 && !serverError && (
+          <div className="bg-[#FEF2F0] text-adogta-secondary px-3 py-2.5 mx-6 my-4 rounded-lg text-[13px] text-center">
+            Por favor, corrige los errores en el formulario
           </div>
         )}
 
@@ -104,6 +110,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
               onChange={handleChange}
               required
               disabled={loading}
+              error={errors.nombres}
             />
             
             <Input
@@ -113,6 +120,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
               onChange={handleChange}
               required
               disabled={loading}
+              error={errors.apellidoPaterno}
             />
             
             <Input
@@ -121,6 +129,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
               value={formData.apellidoMaterno}
               onChange={handleChange}
               disabled={loading}
+              error={errors.apellidoMaterno}
             />
             
             <Input
@@ -131,6 +140,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
               onChange={handleChange}
               required
               disabled={loading}
+              error={errors.email}
             />
             
             <Input
@@ -140,6 +150,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
               value={formData.telefono}
               onChange={handleChange}
               disabled={loading}
+              error={errors.telefono}
             />
             
             <Input
@@ -148,6 +159,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
               value={formData.codigoPostal}
               onChange={handleChange}
               disabled={loading}
+              error={errors.codigoPostal}
             />
           </div>
 
@@ -156,7 +168,7 @@ const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
             <Button
               type="button"
               onClick={onClose}
-              variant="secondary"
+              variant="danger"
               className="flex-1 max-w-[160px]"
             >
               Cancelar
