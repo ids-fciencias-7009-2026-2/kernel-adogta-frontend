@@ -13,19 +13,17 @@ import { validateEditProfileForm } from '../utils/validations';
  * @param {function} onUpdate - Función al actualizar (recibe nuevos datos)
  */
 const EditProfile = ({ isOpen, onClose, userData, onUpdate }) => {
-  // Función de envío al backend
+
   const onSubmit = async (data) => {
     const updatedUser = await usuarioApi.updateUsuario(data);
     onUpdate(updatedUser);
     onClose();
   };
 
-  // Manejo de errores del API
   const handleApiError = (error) => {
     return error.response?.data?.message || 'Error al actualizar el perfil';
   };
 
-  // Hook useForm
   const {
     formData,
     errors,
