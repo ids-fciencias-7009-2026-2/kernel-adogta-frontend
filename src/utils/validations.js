@@ -118,3 +118,21 @@ export const validateLoginForm = (formData) => {
   
   return errors;
 };
+
+// Validar formulario de "olvidé mi contraseña"
+export const validateForgotPasswordForm = (formData) => {
+  const errors = {};
+  const emailError = validateEmail(formData.email);
+  if (emailError) errors.email = emailError;
+  return errors;
+};
+
+// Validar formulario de restablecimiento de contraseña
+export const validateResetPasswordForm = (formData) => {
+  const errors = {};
+  const passwordError = validatePassword(formData.newPassword);
+  if (passwordError) errors.newPassword = passwordError;
+  const confirmError = validateConfirmPassword(formData.newPassword, formData.confirmPassword);
+  if (confirmError) errors.confirmPassword = confirmError;
+  return errors;
+};
