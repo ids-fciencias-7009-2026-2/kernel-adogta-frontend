@@ -152,6 +152,12 @@ const LoginPage = () => {
             Regístrate aquí
           </Link>
         </div>
+        {/* Enlace a página de recuperación */}
+        <div className="mt-3 text-center">
+          <Link to="/forgot-password" className="text-adogta-primary/70 hover:text-adogta-secondary underline text-xs">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
       </div>
     </PublicLayout>
   );
