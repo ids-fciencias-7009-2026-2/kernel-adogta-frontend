@@ -59,9 +59,6 @@ export const validateRegisterForm = (formData) => {
   
   const apellidoPaternoError = validateNombre(formData.apellidoPaterno, 'Apellido paterno');
   if (apellidoPaternoError) errors.apellidoPaterno = apellidoPaternoError;
-
-  const apellidoMaternoError = validateNombre(formData.apellidoMaterno, 'Apellido materno');
-  if (apellidoMaternoError) errors.apellidoMaterno = apellidoMaternoError;
   
   const emailError = validateEmail(formData.email);
   if (emailError) errors.email = emailError;
@@ -84,6 +81,31 @@ export const validateRegisterForm = (formData) => {
   return errors;
 };
 
+// Validación del formulario de edición de perfil
+export const validateEditProfileForm = (formData) => {
+  const errors = {};
+  
+  const nombreError = validateNombre(formData.nombres, 'Nombres');
+  if (nombreError) errors.nombres = nombreError;
+  
+  const apellidoPaternoError = validateNombre(formData.apellidoPaterno, 'Apellido paterno');
+  if (apellidoPaternoError) errors.apellidoPaterno = apellidoPaternoError;
+
+  const apellidoMaternoError = validateNombre(formData.apellidoMaterno, 'Apellido materno');
+  if (apellidoMaternoError) errors.apellidoMaterno = apellidoMaternoError;
+  
+  const emailError = validateEmail(formData.email);
+  if (emailError) errors.email = emailError;
+  
+  const codigoPostalError = validateCodigoPostal(formData.codigoPostal);
+  if (codigoPostalError) errors.codigoPostal = codigoPostalError;
+  
+  const telefonoError = validateTelefono(formData.telefono);
+  if (telefonoError) errors.telefono = telefonoError;
+  
+  return errors;
+};
+
 // Validar formulario de login
 export const validateLoginForm = (formData) => {
   const errors = {};
@@ -94,5 +116,23 @@ export const validateLoginForm = (formData) => {
   const passwordError = validatePassword(formData.password);
   if (passwordError) errors.password = passwordError;
   
+  return errors;
+};
+
+// Validar formulario de "olvidé mi contraseña"
+export const validateForgotPasswordForm = (formData) => {
+  const errors = {};
+  const emailError = validateEmail(formData.email);
+  if (emailError) errors.email = emailError;
+  return errors;
+};
+
+// Validar formulario de restablecimiento de contraseña
+export const validateResetPasswordForm = (formData) => {
+  const errors = {};
+  const passwordError = validatePassword(formData.newPassword);
+  if (passwordError) errors.newPassword = passwordError;
+  const confirmError = validateConfirmPassword(formData.newPassword, formData.confirmPassword);
+  if (confirmError) errors.confirmPassword = confirmError;
   return errors;
 };

@@ -95,5 +95,17 @@ export const usuarioApi = {
     sessionStorage.removeItem('user');
     
     return response.data;
+  },
+
+  forgotPassword: async (data) => {
+    const response = await apiClient.post('/usuarios/forgot-password', data);
+    return response.data;
+  },
+  
+  resetPassword: async (data) => {
+    const response = await apiClient.post('/usuarios/reset-password', data);
+    return response.data;
   }
+
+
 };

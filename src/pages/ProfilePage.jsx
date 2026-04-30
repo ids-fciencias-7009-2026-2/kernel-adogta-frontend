@@ -95,7 +95,7 @@ const ProfilePage = () => {
           <div className="p-6">
             {/* Mensaje de error si existe */}
             {error && (
-              <div className="bg-[#FEF2F0] text-adogta-secondary px-3 py-2.5 rounded-xl mb-6 text-[13px] text-center">
+              <div className="bg-adogta-error text-adogta-secondary px-3 py-2.5 rounded-xl mb-6 text-[13px] text-center">
                 {error}
               </div>
             )}

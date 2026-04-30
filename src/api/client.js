@@ -44,8 +44,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Si el error es 401, el token es inválido o expiró
-    if (error.response?.status === 401) {
+    //para prevenir que de estar en el login se rediriga al login.
+    const isLoginPage = error.config?.url?.includes('/login');
+    // Si el error es 401, redirige a login.
+    if (error.response?.status === 401 && !isLoginPage) {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
       window.location.href = '/login';
