@@ -12,44 +12,35 @@ import logo from '../assets/Adogta_logo.png';
 /**
  * Página para restablecer la contraseña.
  * 
- * Recibe un token de recuperación mediante "?token=...""
+ * Recibe un token de recuperación mediante query string (?token=...)
  * y permite al usuario ingresar una nueva contraseña.
  * Tras el cambio exitoso, redirige al login automáticamente.
  */
 const ResetPasswordPage = () => {
-  /** Obtiene el token de la URL */
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
   const navigate = useNavigate();
 
-  const [success, setSuccess] = useState(false);
+  /** Estado local para el mensaje de éxito (useForm no lo incluye) */
+  const [success, setSuccess] = useState('');
 
   /**
    * Envía la nueva contraseña al backend.
-   * @param {Object} formData               - Datos del formulario
-   * @param {string} formData.newPassword   - Nueva contraseña
-   * @returns {Promise<void>}
+   * @param {Object} formData - { newPassword, confirmPassword }
    */
   const onSubmit = async (formData) => {
     if (!token) throw new Error('Token no válido');
-    await usuarioApi.resetPassword({ token, newPassword: formData.newPassword });
-  };
 
-  /**
-   * Se ejecuta cuando el restablecimiento se completa.
-   * Muestra mensaje y redirige al login después de 3 segundos.
-   */
-  const handleSuccess = () => {
-    setSuccess(true);
+    setSuccess('');
+    await usuarioApi.resetPassword({ token, newPassword: formData.newPassword });
+    setSuccess('Contraseña actualizada. Serás redirigido al inicio de sesión.');
     setTimeout(() => navigate('/login'), 3000);
   };
 
   /**
    * Extrae el mensaje de error de la respuesta del servidor.
-   * @param {Object} error - Error (axios)
-   * @returns {string}     - Mensaje para el usuario
    */
-  const getApiError = (error) => {
+  const handleApiError = (error) => {
     return error.response?.data?.message || 'Error al restablecer la contraseña';
   };
 
@@ -64,18 +55,14 @@ const ResetPasswordPage = () => {
     { newPassword: '', confirmPassword: '' },
     validateResetPasswordForm,
     onSubmit,
-    getApiError,
-    handleSuccess
+    handleApiError
   );
 
   // Pantalla de carga
-  if (loading) {
-    return <LoadingSpinner message="Restableciendo contraseña..." />;
-  }
+  if (loading) return <LoadingSpinner message="Restableciendo contraseña..." />;
 
   return (
     <PublicLayout backgroundImage={null}>
-      {/* Objeto formulario */}
       <div className="max-w-[440px] w-full bg-white rounded-2xl p-10 shadow-xl relative z-10 border border-white/20">
         {/* Logo */}
         <div className="text-center mb-6">
@@ -90,16 +77,16 @@ const ResetPasswordPage = () => {
           Elige una contraseña segura
         </p>
 
-        {/* Respuesta */}
+        {/* Mensaje de éxito */}
         {success && (
-          <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-green-300">
-            Contraseña actualizada. Serás redirigido al inicio de sesión.
+          <div className="bg-adogta-notification text-adogta-primary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-primary/20">
+            <span>✓</span> {success}
           </div>
         )}
 
-        {/* Error de servidor */}
+        {/* Error del servidor */}
         {serverError && (
-          <div className="bg-[#FEF2F0] text-adogta-secondary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-secondary/30">
+          <div className="bg-adogta-error text-adogta-secondary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-secondary/30">
             <span>⚠️</span> {serverError}
           </div>
         )}
@@ -112,7 +99,7 @@ const ResetPasswordPage = () => {
             type="password"
             value={formData.newPassword}
             onChange={handleChange}
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Contraseña segura"
             required
             disabled={loading}
             icon="🔒"

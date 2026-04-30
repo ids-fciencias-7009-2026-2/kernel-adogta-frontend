@@ -127,14 +127,14 @@ const RegisterPage = () => {
           
           {/* Error del servidor */}
           {serverError && (
-            <div className="bg-[#FEF2F0] text-adogta-secondary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-secondary/30">
+            <div className="bg-adogta-error text-adogta-secondary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-secondary/30">
               <span>⚠️</span> {serverError}
             </div>
           )}
           
           {/* Mensaje de éxito */}
           {success && (
-            <div className="bg-[#E8F3F0] text-adogta-primary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-primary/20">
+            <div className="bg-adogta-notification text-adogta-primary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-primary/20">
               <span>✓</span> {success}
             </div>
           )}
@@ -170,6 +170,7 @@ const RegisterPage = () => {
                 value={formData.apellidoMaterno}
                 onChange={handleChange}
                 placeholder="Rodríguez"
+                required
                 disabled={loading}
                 error={errors.apellidoMaterno}
               />
