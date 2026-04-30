@@ -59,9 +59,6 @@ export const validateRegisterForm = (formData) => {
   
   const apellidoPaternoError = validateNombre(formData.apellidoPaterno, 'Apellido paterno');
   if (apellidoPaternoError) errors.apellidoPaterno = apellidoPaternoError;
-
-  const apellidoMaternoError = validateNombre(formData.apellidoMaterno, 'Apellido materno');
-  if (apellidoMaternoError) errors.apellidoMaterno = apellidoMaternoError;
   
   const emailError = validateEmail(formData.email);
   if (emailError) errors.email = emailError;
