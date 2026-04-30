@@ -170,7 +170,6 @@ const RegisterPage = () => {
                 value={formData.apellidoMaterno}
                 onChange={handleChange}
                 placeholder="Rodríguez"
-                required
                 disabled={loading}
                 error={errors.apellidoMaterno}
               />

@@ -59,7 +59,7 @@ const ForgotPasswordPage = () => {
           Ingresa tu correo y te enviaremos un enlace
         </p>
 
-        {/* mensaje d exito */}
+        {/* mensaje de exito */}
         {success && (
           <div className="bg-adogta-notification text-adogta-primary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-primary/20">
             <span>✓</span> {success}
