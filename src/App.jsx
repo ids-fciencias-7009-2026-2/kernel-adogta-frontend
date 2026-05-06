@@ -6,6 +6,8 @@ import ProfilePage from './pages/ProfilePage';
 import { useAuth } from './hooks/useAuth';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import PublicarAnimalPage from "./pages/PublicarAnimalPage";
+
 
 /**
  * Define y organiza las rutas de la aplicación.
@@ -31,7 +33,9 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      
+      <Route path="/publicar" element={<PublicarAnimalPage />} />
+
+	
       {/* Rutas protegidas */}
       <Route
         path="/dashboard"
