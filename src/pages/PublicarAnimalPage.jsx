@@ -3,6 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { razaApi } from "../api/razaApi";
 import { animalApi } from "../api/animalApi";
 import { uploadApi } from "../api/uploadApi";
+import AuthLayout from "../layouts/AuthLayout";
+import dashboardBg from "../assets/Adogta_dashboard.png";
+
+const layoutProps = {
+  title: "Publicar Animal",
+  backgroundImage: dashboardBg,
+  showBackButton: true,
+  backPath: "/dashboard",
+};
 
 const NIVEL_LABELS = {
   1: "Muy bajo",
@@ -192,20 +201,20 @@ export default function PublicarAnimalPage() {
 
   if (exito) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-amber-50">
+      <AuthLayout {...layoutProps}>
         <div className="text-center space-y-4">
           <div className="text-6xl">🐾</div>
           <h2 className="text-2xl font-bold text-amber-800">¡Publicación exitosa!</h2>
           <p className="text-amber-700">Tu mascota ya está lista para encontrar un hogar.</p>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   if (paso === 1) {
     return (
-      <div className="min-h-screen bg-amber-50 py-10 px-4">
-        <div className="max-w-3xl mx-auto">
+      <AuthLayout {...layoutProps}>
+        <div className="max-w-3xl w-full">
           <h1 className="text-3xl font-bold text-amber-900 mb-2">Publicar animal</h1>
           <p className="text-amber-700 mb-6">¿Qué tipo de mascota quieres publicar?</p>
 
@@ -226,14 +235,14 @@ export default function PublicarAnimalPage() {
             </button>
           </div>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   if (paso === 2) {
     return (
-      <div className="min-h-screen bg-amber-50 py-10 px-4">
-        <div className="max-w-3xl mx-auto">
+      <AuthLayout {...layoutProps}>
+        <div className="max-w-3xl w-full">
           <button
             onClick={volverAElegirTipo}
             className="text-amber-600 hover:underline text-sm mb-4 block"
@@ -287,13 +296,13 @@ export default function PublicarAnimalPage() {
             </div>
           )}
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 py-10 px-4">
-      <div className="max-w-2xl mx-auto">
+    <AuthLayout {...layoutProps}>
+      <div className="max-w-2xl w-full">
 
         <button
           onClick={() => setPaso(2)}
@@ -569,6 +578,6 @@ export default function PublicarAnimalPage() {
 
         </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
