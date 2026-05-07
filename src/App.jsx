@@ -11,11 +11,11 @@ import PublicarAnimalPage from "./pages/PublicarAnimalPage";
 
 /**
  * Define y organiza las rutas de la aplicación.
- * 
+ *
  * Se encarga de:
  * - Proteger rutas que requieren autenticación
  * - Redirigir al usuario según su estado de autenticación
- * 
+ *
  * @component
  * @returns {JSX.Element} El sistema de rutas.
  */
@@ -33,10 +33,16 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/publicar" element={<PublicarAnimalPage />} />
 
-	
       {/* Rutas protegidas */}
+      <Route
+        path="/publicar"
+        element={
+          <ProtectedRoute>
+            <PublicarAnimalPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={
@@ -53,17 +59,17 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Ruta raíz (dashboard o login dependiendo de si está autenticado) */}
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
-          isAuthenticated() 
-            ? <Navigate to="/dashboard" replace /> 
+          isAuthenticated()
+            ? <Navigate to="/dashboard" replace />
             : <Navigate to="/login" replace />
-        } 
+        }
       />
-      
+
       {/* En caso de 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -72,10 +78,10 @@ function AppRoutes() {
 
 /**
  * Componente principal.
- * 
+ *
  * Es el punto de entrada del sistema de rutas.
  * Se encarga de envolver las rutas en el Router.
- * 
+ *
  * @component
  * @returns {JSX.Element} La aplicación (con su sistema de rutas configurado).
  */
