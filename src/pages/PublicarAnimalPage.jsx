@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { razaApi } from "../api/razaApi";
 import { animalApi } from "../api/animalApi";
 import { uploadApi } from "../api/uploadApi";
+import { razaApi } from "../api/razaApi";
 import AuthLayout from "../layouts/AuthLayout";
 import dashboardBg from "../assets/Adogta_dashboard.png";
 
@@ -21,21 +21,22 @@ const NIVEL_LABELS = {
   5: "Muy alto",
 };
 
-const RAZAS_MOCK = [
-  { idRaza: 1, nombre: "Chihuahua",  tipo: "Perro", talla: 1, independencia: 3, nivelEnergia: 4, personalidad: "Pequeño, valiente y muy leal. Puede ser nervioso con extraños.", sociableNiños: 2, sociableMascotas: 2, esHipoalergenico: 0 },
-  { idRaza: 2, nombre: "Mestizo",    tipo: "Perro", talla: 3, independencia: 3, nivelEnergia: 3, personalidad: "Adaptable y resistente. Personalidad única según su herencia.",     sociableNiños: 4, sociableMascotas: 4, esHipoalergenico: 0 },
-  { idRaza: 3, nombre: "Pug",        tipo: "Perro", talla: 2, independencia: 2, nivelEnergia: 2, personalidad: "Cariñoso, juguetón y muy social. Le encanta la compañía humana.",   sociableNiños: 5, sociableMascotas: 4, esHipoalergenico: 0 },
-  { idRaza: 4, nombre: "Siamés",     tipo: "Gato",  talla: 2, independencia: 3, nivelEnergia: 4, personalidad: "Vocal, cariñoso y muy social. Demanda atención constante.",         sociableNiños: 4, sociableMascotas: 3, esHipoalergenico: 1 },
-  { idRaza: 5, nombre: "Persa",      tipo: "Gato",  talla: 3, independencia: 4, nivelEnergia: 1, personalidad: "Tranquilo, dulce y sedentario. Disfruta los ambientes calmados.",   sociableNiños: 3, sociableMascotas: 3, esHipoalergenico: 0 },
-  { idRaza: 6, nombre: "Maine Coon", tipo: "Gato",  talla: 5, independencia: 3, nivelEnergia: 3, personalidad: "Gigante gentil. Cariñoso, juguetón y muy social con su familia.",   sociableNiños: 5, sociableMascotas: 4, esHipoalergenico: 0 },
-];
-
 const SLIDERS = [
   { key: "nivelEnergia",      overrideKey: "overrideEnergia",            label: "⚡ Nivel de energía" },
   { key: "independencia",     overrideKey: "overrideIndependencia",      label: "🧘 Independencia" },
   { key: "sociableNiños",     overrideKey: "overrideSociableNiños",      label: "👶 Sociable con niños" },
   { key: "sociableMascotas",  overrideKey: "overrideSociableMascotas",   label: "🐶 Sociable con mascotas" },
 ];
+
+const MAX_NOMBRE = 100;
+const MAX_DESCRIPCION = 2000;
+const MAX_EDAD_MESES = 360;
+const MAX_PADECIMIENTOS = 20;
+const MAX_FOTOS = 10;
+const MAX_PADECIMIENTO_LEN = 100;
+const MAX_FOTO_URL_LEN = 255;
+const URL_REGEX = /^https?:\/\/\S+$/;
+const CP_REGEX = /^\d{5}$/;
 
 export default function PublicarAnimalPage() {
   const navigate = useNavigate();
@@ -47,7 +48,8 @@ export default function PublicarAnimalPage() {
   const [tipoSeleccionado, setTipoSeleccionado] = useState(null);
   const [razaSeleccionada, setRazaSeleccionada] = useState(null);
 
-  const [error, setError] = useState("");
+  const [errorGeneral, setErrorGeneral] = useState("");
+  const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState(false);
 
@@ -57,7 +59,7 @@ export default function PublicarAnimalPage() {
     edad: "",
     descripcion: "",
     codigoPostal: "",
-    estadoVacunacion: "Ninguno",
+    estadoVacunacion: "Completo",
     esterilizado: false,
     entrenado: false,
     nivelEnergia: 3,
@@ -73,9 +75,28 @@ export default function PublicarAnimalPage() {
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState("");
 
+  // Carga las razas reales del backend
   useEffect(() => {
-    setRazas(RAZAS_MOCK);
-    setCargandoRazas(false);
+    let cancelado = false;
+    setCargandoRazas(true);
+    setErrorRazas("");
+    razaApi.getAll()
+      .then((data) => {
+        if (cancelado) return;
+        setRazas(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (cancelado) return;
+        setErrorRazas(
+          err.response?.data?.error ||
+          err.message ||
+          "No se pudieron cargar las razas."
+        );
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoRazas(false);
+      });
+    return () => { cancelado = true; };
   }, []);
 
   function seleccionarTipo(tipo) {
@@ -109,6 +130,14 @@ export default function PublicarAnimalPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    if (errores[name]) {
+      setErrores((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+    if (errorGeneral) setErrorGeneral("");
   }
 
   function handleSlider(name, value) {
@@ -117,7 +146,16 @@ export default function PublicarAnimalPage() {
 
   function agregarPadecimiento() {
     const v = nuevoPadecimiento.trim();
-    if (!v || padecimientos.includes(v)) return;
+    if (!v) return;
+    if (v.length > MAX_PADECIMIENTO_LEN) {
+      setErrorGeneral(`Cada padecimiento no puede exceder ${MAX_PADECIMIENTO_LEN} caracteres.`);
+      return;
+    }
+    if (padecimientos.includes(v)) return;
+    if (padecimientos.length >= MAX_PADECIMIENTOS) {
+      setErrorGeneral(`No puedes registrar más de ${MAX_PADECIMIENTOS} padecimientos.`);
+      return;
+    }
     setPadecimientos((prev) => [...prev, v]);
     setNuevoPadecimiento("");
   }
@@ -128,9 +166,23 @@ export default function PublicarAnimalPage() {
 
   function agregarFoto() {
     const v = nuevaFoto.trim();
-    if (!v || fotos.includes(v)) return;
+    if (!v) return;
+    if (!URL_REGEX.test(v)) {
+      setErrorFoto("La URL debe empezar con http:// o https://");
+      return;
+    }
+    if (v.length > MAX_FOTO_URL_LEN) {
+      setErrorFoto(`La URL no puede exceder ${MAX_FOTO_URL_LEN} caracteres.`);
+      return;
+    }
+    if (fotos.includes(v)) return;
+    if (fotos.length >= MAX_FOTOS) {
+      setErrorFoto(`No puedes registrar más de ${MAX_FOTOS} fotos.`);
+      return;
+    }
     setFotos((prev) => [...prev, v]);
     setNuevaFoto("");
+    setErrorFoto("");
   }
 
   function quitarFoto(i) {
@@ -144,6 +196,10 @@ export default function PublicarAnimalPage() {
     setErrorFoto("");
     try {
       for (const archivo of archivos) {
+        if (fotos.length >= MAX_FOTOS) {
+          setErrorFoto(`No puedes registrar más de ${MAX_FOTOS} fotos.`);
+          break;
+        }
         const { url } = await uploadApi.uploadFile(archivo);
         setFotos((prev) => (prev.includes(url) ? prev : [...prev, url]));
       }
@@ -155,23 +211,77 @@ export default function PublicarAnimalPage() {
     }
   }
 
+  function validar() {
+    const errs = {};
+    const nombre = form.nombre.trim();
+    if (!nombre) errs.nombre = "El nombre del animal es obligatorio.";
+    else if (nombre.length > MAX_NOMBRE) errs.nombre = `El nombre no puede exceder ${MAX_NOMBRE} caracteres.`;
+
+    if (form.tipo !== "Perro" && form.tipo !== "Gato") {
+      errs.tipo = "Selecciona si es Perro o Gato.";
+    }
+
+    const edadNum = Number(form.edad);
+    if (form.edad === "" || Number.isNaN(edadNum)) {
+      errs.edad = "Ingresa una edad válida en meses.";
+    } else if (!Number.isInteger(edadNum) || edadNum < 0) {
+      errs.edad = "La edad debe ser un entero igual o mayor a 0.";
+    } else if (edadNum > MAX_EDAD_MESES) {
+      errs.edad = `La edad no puede exceder ${MAX_EDAD_MESES} meses.`;
+    }
+
+    if (!CP_REGEX.test(form.codigoPostal)) {
+      errs.codigoPostal = "El código postal debe tener exactamente 5 dígitos.";
+    }
+
+    if (form.descripcion.length > MAX_DESCRIPCION) {
+      errs.descripcion = `La descripción no puede exceder ${MAX_DESCRIPCION} caracteres.`;
+    }
+
+    if (!["Completo", "Parcial"].includes(form.estadoVacunacion)) {
+      errs.estadoVacunacion = "El estado de vacunación debe ser Completo o Parcial.";
+    }
+
+    if (form.esterilizado !== true) {
+      errs.esterilizado = "Debes confirmar que el animal está esterilizado.";
+    }
+
+    if (!razaSeleccionada?.idRaza) {
+      errs.idRaza = "Selecciona una raza.";
+    }
+
+    return errs;
+  }
+
+  function aplicarErroresDelServidor(error) {
+    const fields = error.response?.data?.fields;
+    if (fields && typeof fields === "object") {
+      setErrores(fields);
+    }
+    setErrorGeneral(
+      error.response?.data?.error ||
+      error.message ||
+      "Error al publicar."
+    );
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
+    setErrorGeneral("");
+    setErrores({});
 
-    if (!form.nombre.trim()) return setError("El nombre del animal es obligatorio.");
-    if (!form.edad || isNaN(form.edad) || Number(form.edad) < 0)
-      return setError("Ingresa una edad válida en meses.");
-    if (!/^\d{5}$/.test(form.codigoPostal))
-      return setError("El código postal debe tener exactamente 5 dígitos.");
-    if (form.tipo !== "Perro" && form.tipo !== "Gato")
-      return setError("Selecciona si es Perro o Gato.");
+    const errs = validar();
+    if (Object.keys(errs).length > 0) {
+      setErrores(errs);
+      setErrorGeneral("Revisa los campos marcados.");
+      return;
+    }
 
     const payload = {
       nombre: form.nombre.trim(),
       tipo: form.tipo,
       edad: Number(form.edad),
-      descripcion: form.descripcion,
+      descripcion: form.descripcion.trim(),
       codigoPostal: form.codigoPostal,
       estadoVacunacion: form.estadoVacunacion,
       esterilizado: form.esterilizado,
@@ -191,13 +301,17 @@ export default function PublicarAnimalPage() {
       setExito(true);
       setTimeout(() => navigate("/dashboard"), 2000);
     } catch (err) {
-      setError(err.response?.data?.error || err.message || "Error al publicar.");
+      aplicarErroresDelServidor(err);
     } finally {
       setEnviando(false);
     }
   }
 
-  const razasFiltradas = razas.filter((r) => r.tipo === tipoSeleccionado);
+  // Filtra por tipo solo si la respuesta del backend incluye `tipo`;
+  // si no, muestra todas las razas para no bloquear el flujo.
+  const razasFiltradas = razas.some((r) => r.tipo)
+    ? razas.filter((r) => r.tipo === tipoSeleccionado)
+    : razas;
 
   if (exito) {
     return (
@@ -265,7 +379,7 @@ export default function PublicarAnimalPage() {
           )}
 
           {!cargandoRazas && !errorRazas && razasFiltradas.length === 0 && (
-            <p className="text-amber-700">No hay razas disponibles para este tipo.</p>
+            <p className="text-amber-700">No hay razas disponibles.</p>
           )}
 
           {!cargandoRazas && !errorRazas && razasFiltradas.length > 0 && (
@@ -302,9 +416,10 @@ export default function PublicarAnimalPage() {
 
   return (
     <AuthLayout {...layoutProps}>
-      <div className="max-w-2xl w-full">
+      <fieldset disabled={enviando} className="max-w-2xl w-full disabled:opacity-70">
 
         <button
+          type="button"
           onClick={() => setPaso(2)}
           className="text-amber-600 hover:underline text-sm mb-4 block"
         >
@@ -316,13 +431,12 @@ export default function PublicarAnimalPage() {
           <span className="font-semibold">{razaSeleccionada?.nombre}</span>
         </p>
 
-        {/* Personalidad de la raza, read-only */}
         <div className="bg-white border border-amber-200 rounded-2xl p-4 mb-6">
           <h3 className="text-sm font-semibold text-amber-900 mb-1">Sobre la raza</h3>
           <p className="text-sm text-gray-700">{razaSeleccionada?.personalidad}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -334,8 +448,10 @@ export default function PublicarAnimalPage() {
                 value={form.nombre}
                 onChange={handleChange}
                 placeholder="Ej: Luna"
-                className="w-full border border-amber-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                maxLength={MAX_NOMBRE}
+                className={`w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 ${errores.nombre ? "border-red-400" : "border-amber-300"}`}
               />
+              {errores.nombre && <p className="text-xs text-red-600 mt-1">{errores.nombre}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-amber-900 mb-1">
@@ -345,11 +461,14 @@ export default function PublicarAnimalPage() {
                 name="edad"
                 type="number"
                 min="0"
+                max={MAX_EDAD_MESES}
+                step="1"
                 value={form.edad}
                 onChange={handleChange}
                 placeholder="Ej: 18"
-                className="w-full border border-amber-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className={`w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 ${errores.edad ? "border-red-400" : "border-amber-300"}`}
               />
+              {errores.edad && <p className="text-xs text-red-600 mt-1">{errores.edad}</p>}
             </div>
           </div>
 
@@ -362,9 +481,11 @@ export default function PublicarAnimalPage() {
               value={form.codigoPostal}
               onChange={handleChange}
               maxLength={5}
+              inputMode="numeric"
               placeholder="Ej: 06600"
-              className="w-full border border-amber-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className={`w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 ${errores.codigoPostal ? "border-red-400" : "border-amber-300"}`}
             />
+            {errores.codigoPostal && <p className="text-xs text-red-600 mt-1">{errores.codigoPostal}</p>}
           </div>
 
           <div>
@@ -376,38 +497,54 @@ export default function PublicarAnimalPage() {
               value={form.descripcion}
               onChange={handleChange}
               rows={3}
+              maxLength={MAX_DESCRIPCION}
               placeholder="Cuéntanos sobre tu mascota: cómo es, qué le gusta, cualquier cosa especial..."
-              className="w-full border border-amber-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className={`w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 ${errores.descripcion ? "border-red-400" : "border-amber-300"}`}
             />
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>{errores.descripcion}</span>
+              <span>{form.descripcion.length}/{MAX_DESCRIPCION}</span>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-amber-900 mb-1">
-              Estado de vacunación
+              Estado de vacunación *
             </label>
             <select
               name="estadoVacunacion"
               value={form.estadoVacunacion}
               onChange={handleChange}
-              className="w-full border border-amber-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+              className={`w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white ${errores.estadoVacunacion ? "border-red-400" : "border-amber-300"}`}
             >
               <option value="Completo">Completo</option>
               <option value="Parcial">Parcial</option>
-              <option value="Ninguno">Ninguno</option>
             </select>
+            {errores.estadoVacunacion && <p className="text-xs text-red-600 mt-1">{errores.estadoVacunacion}</p>}
           </div>
 
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className={`bg-amber-50 border rounded-xl px-4 py-3 text-sm text-amber-900 ${errores.esterilizado ? "border-red-400" : "border-amber-200"}`}>
+            <p className="mb-2">
+              Solo se aceptan animales esterilizados para promover una adopción responsable.
+            </p>
+            <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 name="esterilizado"
                 checked={form.esterilizado}
                 onChange={handleChange}
-                className="w-4 h-4 accent-amber-500"
+                className="w-4 h-4 mt-0.5 accent-amber-500"
               />
-              <span className="text-sm text-amber-900">Esterilizado/a</span>
+              <span className="text-sm text-amber-900">
+                Confirmo que el animal está esterilizado. <span className="text-red-600">*</span>
+              </span>
             </label>
+            {errores.esterilizado && (
+              <p className="text-xs text-red-600 mt-1">{errores.esterilizado}</p>
+            )}
+          </div>
+
+          <div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -453,7 +590,12 @@ export default function PublicarAnimalPage() {
           </div>
 
           <div className="bg-white border border-amber-200 rounded-2xl p-5 space-y-3">
-            <h3 className="font-bold text-amber-900">Padecimientos</h3>
+            <h3 className="font-bold text-amber-900">
+              Padecimientos{" "}
+              <span className="text-xs text-gray-400 font-normal">
+                ({padecimientos.length}/{MAX_PADECIMIENTOS})
+              </span>
+            </h3>
             <div className="flex gap-2">
               <input
                 value={nuevoPadecimiento}
@@ -464,6 +606,7 @@ export default function PublicarAnimalPage() {
                     agregarPadecimiento();
                   }
                 }}
+                maxLength={MAX_PADECIMIENTO_LEN}
                 placeholder="Ej: Displasia de cadera"
                 className="flex-1 border border-amber-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
@@ -497,7 +640,12 @@ export default function PublicarAnimalPage() {
           </div>
 
           <div className="bg-white border border-amber-200 rounded-2xl p-5 space-y-3">
-            <h3 className="font-bold text-amber-900">Fotos</h3>
+            <h3 className="font-bold text-amber-900">
+              Fotos{" "}
+              <span className="text-xs text-gray-400 font-normal">
+                ({fotos.length}/{MAX_FOTOS})
+              </span>
+            </h3>
 
             <label className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-100 text-amber-800 rounded-xl border border-amber-300 hover:bg-amber-200 cursor-pointer">
               <span>📷</span>
@@ -507,7 +655,7 @@ export default function PublicarAnimalPage() {
                 accept="image/*"
                 multiple
                 onChange={handleFileSelect}
-                disabled={subiendoFoto}
+                disabled={subiendoFoto || fotos.length >= MAX_FOTOS}
                 className="hidden"
               />
             </label>
@@ -528,6 +676,7 @@ export default function PublicarAnimalPage() {
                     agregarFoto();
                   }
                 }}
+                maxLength={MAX_FOTO_URL_LEN}
                 placeholder="https://..."
                 className="flex-1 border border-amber-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
@@ -562,9 +711,9 @@ export default function PublicarAnimalPage() {
             )}
           </div>
 
-          {error && (
+          {errorGeneral && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
-              {error}
+              {errorGeneral}
             </div>
           )}
 
@@ -577,7 +726,7 @@ export default function PublicarAnimalPage() {
           </button>
 
         </form>
-      </div>
+      </fieldset>
     </AuthLayout>
   );
 }
