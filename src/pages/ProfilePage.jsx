@@ -60,6 +60,10 @@ const ProfilePage = () => {
     }
   };
 
+  const handleGoToQuestionnaire = () => {
+    navigate('/cuestionario');
+  };
+
   /**
    * Actualiza los datos del usuario después de editar
    */
@@ -80,72 +84,80 @@ const ProfilePage = () => {
         showBackButton={true}
         backPath="/dashboard"
       >
-        {/* Tarjeta del perfil */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-[650px] w-full">
-          
-          {/* Avatar circular con la inicial del nombre */}
-          <div className="bg-adogta-primary py-6 text-center rounded-t-2xl">
-            <div className="w-20 h-20 bg-adogta-secondary rounded-full inline-flex items-center justify-center text-3xl font-bold text-white border-4 border-white shadow-md">
-              {user?.nombres?.charAt(0)?.toUpperCase() || 
-               user?.nombre?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-          </div>
-
-          {/* Datos del usuario */}
-          <div className="p-6">
-            {/* Mensaje de error si existe */}
-            {error && (
-              <div className="bg-adogta-error text-adogta-secondary px-3 py-2.5 rounded-xl mb-6 text-[13px] text-center">
-                {error}
-              </div>
-            )}
+        <div className="flex flex-col items-center gap-6 w-full">
+          {/* Tarjeta del perfil */}
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-[650px] w-full">
             
-            {/* Lista de campos del perfil */}
-            <div className="flex flex-col gap-2">
-              {/* Nombre completo */}
-              <div className="flex justify-between py-1.5 border-b border-gray-100">
-                <label className="text-adogta-primary text-xs font-medium">Nombre completo</label>
-                <p className="text-adogta-primary text-sm m-0 opacity-90">
-                  {user?.nombres || user?.nombre || '—'} {user?.apellidoPaterno || ''} {user?.apellidoMaterno || ''}
-                </p>
-              </div>
-              
-              {/* Email */}
-              <div className="flex justify-between py-1.5 border-b border-gray-100">
-                <label className="text-adogta-primary text-xs font-medium">Correo electrónico</label>
-                <p className="text-adogta-primary text-sm m-0 opacity-90">{user?.email || '—'}</p>
-              </div>
-              
-              {/* Teléfono */}
-              <div className="flex justify-between py-1.5 border-b border-gray-100">
-                <label className="text-adogta-primary text-xs font-medium">Teléfono</label>
-                <p className="text-adogta-primary text-sm m-0 opacity-90">{user?.telefono || '—'}</p>
-              </div>
-              
-              {/* Código Postal */}
-              <div className="flex justify-between py-1.5 border-b border-gray-100">
-                <label className="text-adogta-primary text-xs font-medium">Código Postal</label>
-                <p className="text-adogta-primary text-sm m-0 opacity-90">{user?.codigoPostal || '—'}</p>
+            {/* Avatar circular con la inicial del nombre */}
+            <div className="bg-adogta-primary py-6 text-center rounded-t-2xl">
+              <div className="w-20 h-20 bg-adogta-secondary rounded-full inline-flex items-center justify-center text-3xl font-bold text-white border-4 border-white shadow-md">
+                {user?.nombres?.charAt(0)?.toUpperCase() || 
+                 user?.nombre?.charAt(0)?.toUpperCase() || 'U'}
               </div>
             </div>
-          </div>
 
-          {/* Botones */}
-          <div className="flex gap-4 justify-center px-6 py-4 pb-6 border-t border-adogta-border bg-adogta-background rounded-b-2xl">
-            <button 
-              onClick={() => setShowEditModal(true)} 
-              className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-orange-600 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
-            >
-              Editar Perfil
-            </button>
-            <button 
-              onClick={handleLogout} 
-              className="bg-red-600 text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-red-700 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
-            >
-              Cerrar Sesión
-            </button>
+            {/* Datos del usuario */}
+            <div className="p-6">
+              {/* Mensaje de error si existe */}
+              {error && (
+                <div className="bg-adogta-error text-adogta-secondary px-3 py-2.5 rounded-xl mb-6 text-[13px] text-center">
+                  {error}
+                </div>
+              )}
+              
+              {/* Lista de campos del perfil */}
+              <div className="flex flex-col gap-2">
+                {/* Nombre completo */}
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <label className="text-adogta-primary text-xs font-medium">Nombre completo</label>
+                  <p className="text-adogta-primary text-sm m-0 opacity-90">
+                    {user?.nombres || user?.nombre || '—'} {user?.apellidoPaterno || ''} {user?.apellidoMaterno || ''}
+                  </p>
+                </div>
+                
+                {/* Email */}
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <label className="text-adogta-primary text-xs font-medium">Correo electrónico</label>
+                  <p className="text-adogta-primary text-sm m-0 opacity-90">{user?.email || '—'}</p>
+                </div>
+                
+                {/* Teléfono */}
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <label className="text-adogta-primary text-xs font-medium">Teléfono</label>
+                  <p className="text-adogta-primary text-sm m-0 opacity-90">{user?.telefono || '—'}</p>
+                </div>
+                
+                {/* Código Postal */}
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <label className="text-adogta-primary text-xs font-medium">Código Postal</label>
+                  <p className="text-adogta-primary text-sm m-0 opacity-90">{user?.codigoPostal || '—'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex gap-4 justify-center px-6 py-4 pb-6 border-t border-adogta-border bg-adogta-background rounded-b-2xl">
+              <button 
+                onClick={() => setShowEditModal(true)} 
+                className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-orange-600 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
+              >
+                Editar Perfil
+              </button>
+              <button 
+                onClick={handleGoToQuestionnaire} 
+                className="border border-adogta-border text-adogta-primary rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-adogta-background hover:border-adogta-secondary hover:scale-105 active:scale-95 flex-1 max-w-[200px]"
+              >
+                Completar Cuestionario
+              </button>
+              <button 
+                onClick={handleLogout} 
+                className="bg-red-600 text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-red-700 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
+              >
+                Cerrar Sesión
+              </button>
+            </div>
           </div>
-        </div>
+          </div>
       </AuthLayout>
 
       {/* Modal para editar perfil */}
