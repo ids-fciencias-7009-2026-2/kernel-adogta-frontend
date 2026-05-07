@@ -29,6 +29,11 @@ const DashboardPage = () => {
   // Botones que aparecen en el header
   const headerButtons = [
     {
+      label: 'Publicar mascota',
+      onClick: () => navigate('/publicar'),
+      variant: 'primary'
+    },
+    {
       label: 'Mi Perfil',
       onClick: () => navigate('/profile'),
       variant: 'primary'
