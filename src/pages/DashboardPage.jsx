@@ -44,7 +44,6 @@ const DashboardPage = () => {
   const [errorAnimales, setErrorAnimales] = useState('');
   const [filtroTipo, setFiltroTipo] = useState(null);
 
-  // ---------- NUEVO: estado y función para eliminación ----------
   const [eliminando, setEliminando] = useState(null);
 
   const handleEliminar = async (idPublicacion) => {
@@ -59,7 +58,6 @@ const DashboardPage = () => {
       setEliminando(null);
     }
   };
-  // -------------------------------------------------------------
 
   useEffect(() => {
     let cancelado = false;
