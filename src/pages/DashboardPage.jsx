@@ -44,6 +44,23 @@ const DashboardPage = () => {
   const [errorAnimales, setErrorAnimales] = useState('');
   const [filtroTipo, setFiltroTipo] = useState(null);
 
+  // ---------- NUEVO: estado y función para eliminación ----------
+  const [eliminando, setEliminando] = useState(null);
+
+  const handleEliminar = async (idPublicacion) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta publicación?')) return;
+    setEliminando(idPublicacion);
+    try {
+      await animalApi.eliminar(idPublicacion);
+      setAnimales((prev) => prev.filter(a => a.idPublicacion !== idPublicacion));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al eliminar la publicación');
+    } finally {
+      setEliminando(null);
+    }
+  };
+  // -------------------------------------------------------------
+
   useEffect(() => {
     let cancelado = false;
     animalApi.listar()
@@ -196,6 +213,9 @@ const DashboardPage = () => {
                     key={`${a.idUsuario}-${a.idPublicacion}-${a.idAnimal}`}
                     animal={a}
                     currentUserId={user?.id}
+                    navigate={navigate}                 
+                    onEliminar={handleEliminar}        
+                    eliminando={eliminando}             
                   />
                 ))}
               </div>
@@ -232,7 +252,7 @@ function CategoryCard({ label, count, imgSrc, bgClass, active, onClick }) {
   );
 }
 
-function AnimalCard({ animal, currentUserId }) {
+function AnimalCard({ animal, currentUserId, navigate, onEliminar, eliminando }) {
   const fallback = animal.tipo === 'Gato' ? FALLBACK_IMG_GATO : FALLBACK_IMG_PERRO;
   const foto = animal.fotos?.[0] || fallback;
   const caracter = caracterDesdeEnergia(animal.nivelEnergia);
@@ -311,9 +331,21 @@ function AnimalCard({ animal, currentUserId }) {
 
         <div className="mt-4 flex flex-col items-stretch gap-2">
           {esPropia ? (
-            <p className="text-center text-xs text-gray-500 italic">
-              Esta es tu publicación.
-            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate(`/editar-animal/${animal.idAnimal}`)}
+                className="flex-1 bg-amber-100 text-amber-800 font-semibold py-2 px-4 rounded-full hover:bg-amber-200 transition-colors"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => onEliminar(animal.idPublicacion)}
+                disabled={eliminando === animal.idPublicacion}
+                className="flex-1 bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-full hover:bg-red-200 transition-colors disabled:opacity-50"
+              >
+                {eliminando === animal.idPublicacion ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
           ) : enviada ? (
             <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-2 font-semibold">
               ¡Solicitud enviada!
