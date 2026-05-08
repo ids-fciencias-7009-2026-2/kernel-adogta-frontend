@@ -8,30 +8,12 @@ import { useAuth } from './hooks/useAuth';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
+import EditarAnimalPage from './pages/EditarAnimalPage';
 
-/**
- * Componente que protege rutas que requieren autenticación.
- * Redirige al login si el usuario no está autenticado.
- *
- * @component
- * @param {boolean} isAuthenticated - Si el usuario está autenticado.
- * @param {JSX.Element} children - Componente a renderizar si está autenticado.
- * @returns {JSX.Element}
- */
 function ProtectedRoute({ isAuthenticated, children }) {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-/**
- * Define y organiza las rutas de la aplicación.
- *
- * Se encarga de:
- * - Proteger rutas que requieren autenticación
- * - Redirigir al usuario según su estado de autenticación
- *
- * @component
- * @returns {JSX.Element} El sistema de rutas.
- */
 function AppRoutes() {
     const { isAuthenticated } = useAuth();
     const autenticado = isAuthenticated();
@@ -77,8 +59,17 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            {/* NUEVA RUTA (de feature/edicion-publicaciones) */}
+            <Route
+                path="/editar-animal/:idAnimal"
+                element={
+                    <ProtectedRoute isAuthenticated={autenticado}>
+                        <EditarAnimalPage />
+                    </ProtectedRoute>
+                }
+            />
 
-            {/* Ruta raíz (dashboard o login dependiendo de si está autenticado) */}
+            {/* Ruta raíz */}
             <Route
                 path="/"
                 element={
@@ -88,21 +79,12 @@ function AppRoutes() {
                 }
             />
 
-            {/* En caso de 404 */}
+            {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
 }
 
-/**
- * Componente principal.
- *
- * Es el punto de entrada del sistema de rutas.
- * Se encarga de envolver las rutas en el Router.
- *
- * @component
- * @returns {JSX.Element} La aplicación (con su sistema de rutas configurado).
- */
 function App() {
     return (
         <Router>
