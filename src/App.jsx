@@ -7,6 +7,8 @@ import { useAuth } from './hooks/useAuth';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
+import AnimalDetallePage from './pages/AnimalDetallePage';
+import MisSolicitudesPage from './pages/MisSolicitudesPage';
 
 
 /**
@@ -57,6 +59,22 @@ function AppRoutes() {
           <ProtectedRoute>
             <ProfilePage />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/animal/:idPublicacion/:idAnimal/:idUsuarioAnimal"
+        element={
+            <ProtectedRoute>
+                <AnimalDetallePage />
+            </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mis-solicitudes"
+        element={
+            <ProtectedRoute>
+                <MisSolicitudesPage />
+            </ProtectedRoute>
         }
       />
 
