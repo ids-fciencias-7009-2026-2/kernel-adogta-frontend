@@ -28,4 +28,14 @@ export const animalApi = {
     return response.data;
   },
 
+  /**
+   * GET /api/animales — lista las publicaciones activas para el dashboard.
+   *
+   * @returns {Promise<Array>} Arreglo de publicaciones con los datos del animal y la raza.
+   */
+  listar: async () => {
+    const response = await apiClient.get('/api/animales');
+    return response.data;
+  },
+
 };
