@@ -7,6 +7,8 @@ import { useAuth } from './hooks/useAuth';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
+import EditarAnimalPage from './pages/EditarAnimalPage';
+import QuestionnairePage from './pages/QuestionnairePage';
 
 
 /**
@@ -59,6 +61,23 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/cuestionario"
+        element={
+          <ProtectedRoute>
+            <QuestionnairePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/editar-animal/:idAnimal"
+        element={
+          <ProtectedRoute>
+            <EditarAnimalPage />
+          </ProtectedRoute>
+        }
+      />
+      
 
       {/* Ruta raíz (dashboard o login dependiendo de si está autenticado) */}
       <Route
