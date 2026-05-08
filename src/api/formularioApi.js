@@ -17,5 +17,10 @@ export const formularioApi = {
   guardar: async (formData) => {
     const response = await apiClient.post('/formularios/guardar', formData);
     return response.data;
+  },
+
+  puedeResponder: async () => {
+    const response = await apiClient.get('/formularios/puede-responder');
+    return response.data;
   }
 };

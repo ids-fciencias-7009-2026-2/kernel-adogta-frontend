@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import EditProfile from '../modals/EditProfile';
 import { usuarioApi } from '../api/usuarioApi';
+import { formularioApi } from '../api/formularioApi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import perfilBackground from '../assets/Adogta_dashboard.png';
 
@@ -15,6 +16,8 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errorCuestionario, setErrorCuestionario] = useState('');
+  const [validandoCuestionario, setValidandoCuestionario] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
   // Verifica token y carga los datos
@@ -60,8 +63,22 @@ const ProfilePage = () => {
     }
   };
 
-  const handleGoToQuestionnaire = () => {
-    navigate('/cuestionario');
+  const handleGoToQuestionnaire = async () => {
+    setErrorCuestionario('');
+    try {
+      setValidandoCuestionario(true);
+      await formularioApi.puedeResponder();
+      navigate('/cuestionario');
+    } catch (err) {
+      if (err.response?.status === 409) {
+        const mensaje = err.response?.data?.mensaje || err.response?.data?.error;
+        setErrorCuestionario(mensaje);
+        return;
+      }
+      setErrorCuestionario('No se pudo validar el cuestionario. Intenta nuevamente.');
+    } finally {
+      setValidandoCuestionario(false);
+    }
   };
 
   /**
@@ -136,24 +153,32 @@ const ProfilePage = () => {
             </div>
 
             {/* Botones */}
-            <div className="flex gap-4 justify-center px-6 py-4 pb-6 border-t border-adogta-border bg-adogta-background rounded-b-2xl">
+            <div className="flex flex-col items-center gap-4 px-6 py-4 pb-6 border-t border-adogta-border bg-adogta-background rounded-b-2xl">
+              <div className="flex gap-4 justify-center w-full">
+                <button 
+                  onClick={() => setShowEditModal(true)} 
+                  className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-orange-600 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
+                >
+                  Editar Perfil
+                </button>
+                <button 
+                  onClick={handleLogout} 
+                  className="bg-red-600 text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-red-700 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
+                >
+                  Cerrar Sesión
+                </button>
+              </div>
+              {errorCuestionario && (
+                <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30 w-full max-w-[420px]">
+                  {errorCuestionario}
+                </div>
+              )}
               <button 
-                onClick={() => setShowEditModal(true)} 
-                className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-orange-600 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
+                onClick={handleGoToQuestionnaire}
+                disabled={validandoCuestionario}
+                className="bg-adogta-primary text-white rounded-full px-8 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-adogta-secondary hover:scale-105 active:scale-95 shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Editar Perfil
-              </button>
-              <button 
-                onClick={handleGoToQuestionnaire} 
-                className="border border-adogta-border text-adogta-primary rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-adogta-background hover:border-adogta-secondary hover:scale-105 active:scale-95 flex-1 max-w-[200px]"
-              >
-                Completar Cuestionario
-              </button>
-              <button 
-                onClick={handleLogout} 
-                className="bg-red-600 text-white rounded-full px-6 py-2 text-sm font-semibold cursor-pointer transition-all duration-300 hover:bg-red-700 hover:scale-105 active:scale-95 flex-1 max-w-[180px]"
-              >
-                Cerrar Sesión
+                Completar cuestionario
               </button>
             </div>
           </div>
