@@ -263,6 +263,7 @@ export function useAnimalForm({ esEdicion = false, idAnimal = null } = {}) {
 
   return {
     form,
+    setForm,
     padecimientos,
     fotos,
     enviando,
@@ -273,6 +274,7 @@ export function useAnimalForm({ esEdicion = false, idAnimal = null } = {}) {
     loadingRazas,
     errorRazas,
     razaSeleccionada,
+    setRazaSeleccionada,
     loadingAnimal,
     errorAnimal,
 
