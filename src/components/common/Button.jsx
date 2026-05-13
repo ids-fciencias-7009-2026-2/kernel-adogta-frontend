@@ -13,7 +13,7 @@ const Button = ({
   
   const variants = {
     primary: "bg-adogta-secondary text-adogta-white hover:bg-orange-500 hover:scale-105 active:scale-95",
-    secondary: "border border-adogta-border text-adogta-primary hover:bg-adogta-background hover:border-adogta-secondary hover:scale-102",
+    secondary: "bg-adogta-background border border-adogta-border text-adogta-primary hover:bg-adogta-secondary/20 hover:border-adogta-secondary hover:scale-102",
     danger: "bg-red-600 text-white hover:bg-red-700 hover:scale-105 active:scale-95"
   }
   

@@ -140,9 +140,9 @@ export default function PublicarAnimalPage() {
     return (
       <AuthLayout {...layoutProps}>
         <div className="max-w-3xl w-full">
-          <button onClick={volverAElegirTipo} className="text-adogta-primary hover:text-adogta-secondary underline text-sm mb-4 block">
-            ← Cambiar tipo
-          </button>
+          <Button onClick={volverAElegirTipo} variant="secondary" icon="←">
+            Cambiar tipo
+          </Button>
           <h1 className="text-3xl font-bold text-adogta-primary mb-2">
             Razas de {tipoSeleccionado === "Perro" ? "perro" : "gato"}
           </h1>
@@ -198,13 +198,9 @@ export default function PublicarAnimalPage() {
   return (
     <AuthLayout {...layoutProps}>
       <fieldset disabled={enviando} className="max-w-2xl w-full disabled:opacity-70">
-        <button
-          type="button"
-          onClick={() => setPaso(2)}
-          className="text-adogta-primary hover:text-adogta-secondary underline text-sm mb-4 block"
-        >
-          ← Cambiar raza
-        </button>
+        <Button onClick={() => setPaso(2)} variant="secondary" icon="←">
+          Cambiar raza
+        </Button>
         <h1 className="text-3xl font-bold text-adogta-primary mb-1">Detalles de tu mascota</h1>
         <p className="text-adogta-primary mb-6">
           {tipoSeleccionado} ·{" "}
