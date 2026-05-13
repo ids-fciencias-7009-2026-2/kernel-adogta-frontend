@@ -7,13 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        'adogta-primary': '#4A728F',    
-        'adogta-secondary': '#F4A26C',   
-        'adogta-background': '#E6DCC8',  
-        'adogta-white': '#FFFFFF',       
-        'adogta-border': '#CBD5E1',
-        'adogta-notification': '#E8F3F0', 
-        'adogta-error': '#FEF2F0',     
+        'adogta-primary': '#78350F',        
+        'adogta-secondary': '#F59E0B',      
+        'adogta-background': '#FEF3C7',     
+        'adogta-white': '#FFFFFF',          
+        'adogta-border': '#FDE68A',         
+        'adogta-notification': '#E8F3F0',   
+        'adogta-error': '#FEF2F0',          
       },
     },
   },
