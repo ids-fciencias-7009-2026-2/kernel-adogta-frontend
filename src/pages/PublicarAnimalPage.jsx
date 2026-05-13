@@ -53,16 +53,14 @@ export default function PublicarAnimalPage() {
 
   const tipoSeleccionado = form.tipo || null;
 
-  // Filtro de razas: si el backend incluye tipo, filtra; si no, muestra todas.
+  // Filtro de razas
   const razasFiltradas = useMemo(() => {
     if (!razas.length) return [];
     if (razas.some((r) => r.tipo)) return razas.filter((r) => r.tipo === tipoSeleccionado);
     return razas;
   }, [razas, tipoSeleccionado]);
 
-  // -------------------------------------------
-  // Navegación entre pasos
-  // -------------------------------------------
+  // Navegación entre las fases del formulario
   function seleccionarTipo(tipo) {
     setForm((prev) => ({ ...prev, tipo }));
     setPaso(2);
@@ -87,9 +85,7 @@ export default function PublicarAnimalPage() {
     setPaso(3);
   }
 
-  // -------------------------------------------
-  // Render de pantalla de éxito
-  // -------------------------------------------
+  // Pantalla de éxito
   if (exito) {
     return (
       <AuthLayout {...layoutProps}>
@@ -102,9 +98,7 @@ export default function PublicarAnimalPage() {
     );
   }
 
-  // -------------------------------------------
-  // Paso 1 – Elegir tipo de animal
-  // -------------------------------------------
+  // 1 – Elegir tipo de animal
   if (paso === 1) {
     return (
       <AuthLayout {...layoutProps}>
@@ -133,9 +127,7 @@ export default function PublicarAnimalPage() {
     );
   }
 
-  // -------------------------------------------
-  // Paso 2 – Seleccionar raza
-  // -------------------------------------------
+  // 2 – Seleccionar raza
   if (paso === 2) {
     return (
       <AuthLayout {...layoutProps}>
@@ -192,9 +184,7 @@ export default function PublicarAnimalPage() {
     );
   }
 
-  // -------------------------------------------
-  // Paso 3 – Formulario de detalles
-  // -------------------------------------------
+  // 3 – Formulario de detalles
   return (
     <AuthLayout {...layoutProps}>
       <fieldset disabled={enviando} className="max-w-2xl w-full disabled:opacity-70">
