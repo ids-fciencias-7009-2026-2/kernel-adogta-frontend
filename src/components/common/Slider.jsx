@@ -37,10 +37,6 @@ const Slider = ({
           disabled={disabled}
           className="w-full accent-adogta-secondary disabled:opacity-50"
         />
-        <div className="flex justify-between text-xs text-adogta-primary/60">
-          <span>{labels[min] || 'Mínimo'}</span>
-          <span>{labels[max] || 'Máximo'}</span>
-        </div>
       </div>
     );
   };
