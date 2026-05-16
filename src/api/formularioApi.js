@@ -22,5 +22,20 @@ export const formularioApi = {
   puedeResponder: async () => {
     const response = await apiClient.get('/formularios/puede-responder');
     return response.data;
+  },
+
+  /**
+   * Verifica si el usuario aún tiene pendiente contestar el cuestionario.
+   * @returns {Promise<boolean>} true si está pendiente (202), false si ya lo contestó (200).
+   */
+  pendienteContestar: async () => {
+    // 200 = ya contestó, 202 = pendiente
+    try {
+      const response = await apiClient.get('/formularios/pendiente-contestar');
+      return response.status === 202;
+    } catch (err) {
+      if (err.response?.status === 202) return true;
+      return false;
+    }
   }
 };
