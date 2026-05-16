@@ -8,6 +8,21 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import perfilBackground from '../assets/Adogta_dashboard.png';
 import Campo from '../components/common/Campo';
 import QuestionnaireModal from '../modals/QuestionnaireModal';
+import { preguntasCuestionario } from '../utils/questionnaire';
+
+/**
+ * Diccionario de los valores del cuestionario.
+ * Convierte los valores numéricos que devuelve el backend a los strings
+ * que utiliza el formulario del cuestionario.
+ */
+const MAPEO_VALORES = {
+  tiempoEjercicio: { 0: 'SEDENTARIO', 1: 'MODERADO', 2: 'INTENSO' },
+  tiempoSoledad:  { 0: 'MENOS_DE_4H', 1: 'DE_4H_A_8H', 2: 'MAS_DE_8H' },
+  tieneNiños:     { 0: 'NO', 1: 'SI' },
+  tieneMascotas:  { 0: 'NO', 1: 'SI' },
+  tieneAlergias:  { 0: 'NO', 1: 'SI' },
+  presupuesto:    { 0: 'MENOS_DE_10K', 1: 'DE_10K_A_20K', 2: 'MAS_DE_20K' },
+};
 
 /**
  * Página de perfil de usuario.
@@ -24,7 +39,10 @@ const ProfilePage = () => {
   const [error, setError] = useState(null);
   const [errorCuestionario, setErrorCuestionario] = useState('');
   const [showCuestionario, setShowCuestionario] = useState(false);
+  const [ultimoFormulario, setUltimoFormulario] = useState(null);
+  const [cargandoFormulario, setCargandoFormulario] = useState(false);
   const [validandoCuestionario, setValidandoCuestionario] = useState(false);
+  const [puedeActualizar, setPuedeActualizar] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeSection, setActiveSection] = useState('datos');
 
@@ -52,6 +70,35 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeSection === 'cuestionario' && user?.envioFormulario) {
+      // Cargar el último formulario si aún no está
+      if (!ultimoFormulario) {
+        setCargandoFormulario(true);
+        formularioApi.obtenerUltimo()
+          .then(data => setUltimoFormulario(data))
+          .catch(() => {})
+          .finally(() => setCargandoFormulario(false));
+      }
+      
+      // Validar si puede actualizar
+      setValidandoCuestionario(true);
+      formularioApi.puedeResponder()
+        .then(() => {
+          setPuedeActualizar(true);
+          setErrorCuestionario('');
+        })
+        .catch((err) => {
+          if (err.response?.status === 409) {
+            setPuedeActualizar(false);
+            const mensaje = err.response?.data?.mensaje || err.response?.data?.error;
+            setErrorCuestionario(mensaje);
+          }
+        })
+        .finally(() => setValidandoCuestionario(false));
+    }
+  }, [activeSection, user, ultimoFormulario]);
 
   // logout
   const handleLogout = async () => {
@@ -122,38 +169,90 @@ const ProfilePage = () => {
           </div>
         );
 
-      case 'cuestionario':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-adogta-primary">Cuestionario</h2>
-            {user?.envioFormulario ? (
-              <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
-                <p className="text-adogta-primary text-sm">Ya completaste el cuestionario de adopción.</p>
-                <p className="text-adogta-primary/60 text-xs">Tus respuestas nos ayudan a encontrar mascotas compatibles contigo.</p>
-                <button onClick={handleGoToQuestionnaire} disabled={validandoCuestionario} className="bg-adogta-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-adogta-secondary transition-colors disabled:opacity-50">
-                  {validandoCuestionario ? 'Validando...' : 'Actualizar cuestionario'}
-                </button>
-                {errorCuestionario && (
-                  <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
-                    {errorCuestionario}
+        case 'cuestionario':
+          return (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-adogta-primary">Cuestionario</h2>
+              {user?.envioFormulario ? (
+                cargandoFormulario ? (
+                  <p className="text-adogta-primary text-sm">Cargando respuestas...</p>
+                ) : ultimoFormulario ? (
+                  <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+                    <p className="text-adogta-primary text-sm">
+                      Completaste el cuestionario el{' '}
+                      <strong>{new Date(ultimoFormulario.fechaEnvio).toLocaleDateString('es-MX', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                      })}</strong>.
+                    </p>
+                    <div className="space-y-2">
+                      <h3 className="text-adogta-primary font-semibold text-sm">Tus respuestas:</h3>
+                      {preguntasCuestionario.map((pregunta) => {
+                      const valorBackend = ultimoFormulario[pregunta.id]; // 0, 1, 2...
+                      const valorString = MAPEO_VALORES[pregunta.id]?.[valorBackend] || valorBackend;
+                      const opcion = pregunta.options.find(o => o.value === valorString);
+                      return (
+                        <div key={pregunta.id} className="flex justify-between text-sm border-b border-gray-100 py-1">
+                          <span className="text-adogta-primary/80">{pregunta.label}</span>
+                          <span className="text-adogta-primary font-medium">
+                            {opcion?.label || '—'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    </div>
+                    <button
+                      onClick={handleGoToQuestionnaire}
+                      disabled={validandoCuestionario}
+                      className="bg-adogta-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-adogta-secondary transition-colors disabled:opacity-50"
+                    >
+                      {validandoCuestionario ? 'Validando...' : 'Actualizar cuestionario'}
+                    </button>
+                    {errorCuestionario && (
+                      <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
+                        {errorCuestionario}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
-                <p className="text-adogta-primary text-sm">Aún no has completado el cuestionario de adopción.</p>
-                <button onClick={handleGoToQuestionnaire} disabled={validandoCuestionario} className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">
-                  {validandoCuestionario ? 'Validando...' : 'Completar cuestionario'}
-                </button>
-                {errorCuestionario && (
-                  <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
-                    {errorCuestionario}
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
+                    <p className="text-adogta-primary text-sm">
+                      Ya completaste el cuestionario de adopción.
+                    </p>
+                    <button
+                      onClick={handleGoToQuestionnaire}
+                      disabled={validandoCuestionario}
+                      className="bg-adogta-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-adogta-secondary transition-colors disabled:opacity-50"
+                    >
+                      {validandoCuestionario ? 'Validando...' : 'Actualizar cuestionario'}
+                    </button>
+                    {errorCuestionario && (
+                      <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
+                        {errorCuestionario}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
+                )
+              ) : (
+                <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
+                  <p className="text-adogta-primary text-sm">
+                    Aún no has completado el cuestionario de adopción.
+                  </p>
+                  <button
+                    onClick={handleGoToQuestionnaire}
+                    disabled={validandoCuestionario}
+                    className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
+                  >
+                    {validandoCuestionario ? 'Validando...' : 'Completar cuestionario'}
+                  </button>
+                  {errorCuestionario && (
+                    <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
+                      {errorCuestionario}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
 
       case 'publicaciones':
         return (
