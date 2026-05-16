@@ -10,28 +10,6 @@ import Campo from '../components/common/Campo';
 import QuestionnaireModal from '../modals/QuestionnaireModal';
 import { preguntasCuestionario } from '../utils/questionnaire';
 
-/**
- * Diccionario de los valores del cuestionario.
- * Convierte los valores numéricos que devuelve el backend a los strings
- * que utiliza el formulario del cuestionario.
- */
-const MAPEO_VALORES = {
-  tiempoEjercicio: { 0: 'SEDENTARIO', 1: 'MODERADO', 2: 'INTENSO' },
-  tiempoSoledad:  { 0: 'MENOS_DE_4H', 1: 'DE_4H_A_8H', 2: 'MAS_DE_8H' },
-  tieneNiños:     { 0: 'NO', 1: 'SI' },
-  tieneMascotas:  { 0: 'NO', 1: 'SI' },
-  tieneAlergias:  { 0: 'NO', 1: 'SI' },
-  presupuesto:    { 0: 'MENOS_DE_10K', 1: 'DE_10K_A_20K', 2: 'MAS_DE_20K' },
-};
-
-/**
- * Página de perfil de usuario.
- *
- * Panel:
- *  - Mis Datos: información del usuario y botón para editar perfil o cerrar sesión.
- *  - Cuestionario: Información respecto al cuestionario.
- *  - Publicaciones: "Próximamente".
- */
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -46,7 +24,7 @@ const ProfilePage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeSection, setActiveSection] = useState('datos');
 
-  // Carga de información de usuario.
+  // Carga de datos.
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     if (!token) {
@@ -63,7 +41,6 @@ const ProfilePage = () => {
       const userData = await usuarioApi.getMe();
       setUser(userData);
     } catch (err) {
-      console.error('Error loading user data:', err);
       setError('No se pudo cargar la información del usuario');
       if (err.response?.status === 401) navigate('/login');
     } finally {
@@ -71,18 +48,20 @@ const ProfilePage = () => {
     }
   };
 
+  // Cargamos la última respuesta al formulario por parte del usuario.
+  useEffect(() => {
+    if (activeSection === 'cuestionario' && user?.envioFormulario && !ultimoFormulario) {
+      setCargandoFormulario(true);
+      formularioApi.obtenerUltimo()
+        .then(data => setUltimoFormulario(data))
+        .catch(() => {})
+        .finally(() => setCargandoFormulario(false));
+    }
+  }, [activeSection, user, ultimoFormulario]);
+
+  // CHecamos si puede actualizar el cuestionario
   useEffect(() => {
     if (activeSection === 'cuestionario' && user?.envioFormulario) {
-      // Cargar el último formulario si aún no está
-      if (!ultimoFormulario) {
-        setCargandoFormulario(true);
-        formularioApi.obtenerUltimo()
-          .then(data => setUltimoFormulario(data))
-          .catch(() => {})
-          .finally(() => setCargandoFormulario(false));
-      }
-      
-      // Validar si puede actualizar
       setValidandoCuestionario(true);
       formularioApi.puedeResponder()
         .then(() => {
@@ -92,57 +71,45 @@ const ProfilePage = () => {
         .catch((err) => {
           if (err.response?.status === 409) {
             setPuedeActualizar(false);
-            const mensaje = err.response?.data?.mensaje || err.response?.data?.error;
-            setErrorCuestionario(mensaje);
+            const mensaje = err.response?.data?.error || err.response?.data?.mensaje;
+            setErrorCuestionario(mensaje || 'Aún no ha pasado un año desde tu último cuestionario.');
+          } else {
+            setErrorCuestionario('No se pudo validar el cuestionario. Intenta nuevamente.');
           }
         })
         .finally(() => setValidandoCuestionario(false));
     }
-  }, [activeSection, user, ultimoFormulario]);
+  }, [activeSection, user]);
 
-  // logout
+  //logout.
   const handleLogout = async () => {
     try {
       await usuarioApi.logout();
       navigate('/login');
     } catch (err) {
-      console.error('Error during logout:', err);
       navigate('/login');
     }
   };
 
   const handleUpdateProfile = (updatedUser) => setUser(updatedUser);
 
-  //Respecto al cuestionario.
   const handleGoToQuestionnaire = async () => {
-    setErrorCuestionario('');
-    try {
-      setValidandoCuestionario(true);
-      await formularioApi.puedeResponder();
-      setShowCuestionario(true);          // abre el modal
-    } catch (err) {
-      if (err.response?.status === 409) {
-        const mensaje = err.response?.data?.mensaje || err.response?.data?.error;
-        setErrorCuestionario(mensaje);
-        return;
-      }
-      setErrorCuestionario('No se pudo validar el cuestionario. Intenta nuevamente.');
-    } finally {
-      setValidandoCuestionario(false);
-    }
+    setShowCuestionario(true);
   };
 
   if (loading) return <LoadingSpinner message="Cargando tu perfil..." />;
 
+  //panel izquierdo de items.
   const menuItems = [
     { key: 'datos', label: 'Mis Datos' },
     { key: 'cuestionario', label: 'Cuestionario' },
     { key: 'publicaciones', label: 'Publicaciones' },
   ];
 
-  //Render del panel (datos, cuestionario, publicaciones)
+  //render del panel derecho y lo que se muestra en cada caso.
   const renderSection = () => {
     switch (activeSection) {
+      //datos del usuario.
       case 'datos':
         return (
           <div className="space-y-6">
@@ -169,91 +136,78 @@ const ProfilePage = () => {
           </div>
         );
 
-        case 'cuestionario':
-          return (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-adogta-primary">Cuestionario</h2>
-              {user?.envioFormulario ? (
-                cargandoFormulario ? (
-                  <p className="text-adogta-primary text-sm">Cargando respuestas...</p>
-                ) : ultimoFormulario ? (
-                  <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-                    <p className="text-adogta-primary text-sm">
-                      Completaste el cuestionario el{' '}
-                      <strong>{new Date(ultimoFormulario.fechaEnvio).toLocaleDateString('es-MX', {
-                        year: 'numeric', month: 'long', day: 'numeric'
-                      })}</strong>.
-                    </p>
-                    <div className="space-y-2">
-                      <h3 className="text-adogta-primary font-semibold text-sm">Tus respuestas:</h3>
-                      {preguntasCuestionario.map((pregunta) => {
-                      const valorBackend = ultimoFormulario[pregunta.id]; // 0, 1, 2...
-                      const valorString = MAPEO_VALORES[pregunta.id]?.[valorBackend] || valorBackend;
-                      const opcion = pregunta.options.find(o => o.value === valorString);
+      //manejo del cuestionario.
+      case 'cuestionario':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-adogta-primary">Cuestionario</h2>
+            {user?.envioFormulario ? (
+              cargandoFormulario ? (
+                <p className="text-adogta-primary text-sm">Cargando respuestas...</p>
+              ) : ultimoFormulario ? (
+                <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+                  <p className="text-adogta-primary text-sm">
+                    Completaste el cuestionario el{' '}
+                    <strong>{new Date(ultimoFormulario.fechaEnvio).toLocaleDateString('es-MX', {
+                      year: 'numeric', month: 'long', day: 'numeric'
+                    })}</strong>.
+                  </p>
+                  <div className="space-y-2">
+                    <h3 className="text-adogta-primary font-semibold text-sm">Tus respuestas:</h3>
+                    {preguntasCuestionario.map((pregunta) => {
+                      const valorBackend = ultimoFormulario[pregunta.id];
+                      const opcion = pregunta.options.find(o => o.value === valorBackend);
+                      const etiqueta = opcion?.label || valorBackend;
                       return (
                         <div key={pregunta.id} className="flex justify-between text-sm border-b border-gray-100 py-1">
                           <span className="text-adogta-primary/80">{pregunta.label}</span>
                           <span className="text-adogta-primary font-medium">
-                            {opcion?.label || '—'}
+                            {etiqueta}
                           </span>
                         </div>
                       );
                     })}
-                    </div>
+                  </div>
+                  {puedeActualizar ? (
                     <button
                       onClick={handleGoToQuestionnaire}
-                      disabled={validandoCuestionario}
-                      className="bg-adogta-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-adogta-secondary transition-colors disabled:opacity-50"
+                      className="bg-adogta-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-adogta-secondary transition-colors"
                     >
-                      {validandoCuestionario ? 'Validando...' : 'Actualizar cuestionario'}
+                      Actualizar cuestionario
                     </button>
-                    {errorCuestionario && (
+                  ) : (
+                    errorCuestionario && (
                       <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
                         {errorCuestionario}
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
-                    <p className="text-adogta-primary text-sm">
-                      Ya completaste el cuestionario de adopción.
-                    </p>
-                    <button
-                      onClick={handleGoToQuestionnaire}
-                      disabled={validandoCuestionario}
-                      className="bg-adogta-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-adogta-secondary transition-colors disabled:opacity-50"
-                    >
-                      {validandoCuestionario ? 'Validando...' : 'Actualizar cuestionario'}
-                    </button>
-                    {errorCuestionario && (
-                      <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
-                        {errorCuestionario}
-                      </div>
-                    )}
-                  </div>
-                )
-              ) : (
-                <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
-                  <p className="text-adogta-primary text-sm">
-                    Aún no has completado el cuestionario de adopción.
-                  </p>
-                  <button
-                    onClick={handleGoToQuestionnaire}
-                    disabled={validandoCuestionario}
-                    className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
-                  >
-                    {validandoCuestionario ? 'Validando...' : 'Completar cuestionario'}
-                  </button>
-                  {errorCuestionario && (
-                    <div className="bg-adogta-error text-adogta-secondary px-4 py-2 rounded-xl text-[13px] text-center border border-adogta-secondary/30">
-                      {errorCuestionario}
-                    </div>
+                    )
                   )}
                 </div>
-              )}
-            </div>
-          );
+              ) : (
+                <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
+                  <p className="text-adogta-primary text-sm">Ya completaste el cuestionario de adopción.</p>
+                  {puedeActualizar && (
+                    <button onClick={handleGoToQuestionnaire} className="bg-adogta-primary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-adogta-secondary transition-colors">
+                      Actualizar cuestionario
+                    </button>
+                  )}
+                </div>
+              )
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
+                <p className="text-adogta-primary text-sm">Aún no has completado el cuestionario de adopción.</p>
+                <button
+                  onClick={handleGoToQuestionnaire}
+                  className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-orange-600 transition-colors"
+                >
+                  Completar cuestionario
+                </button>
+              </div>
+            )}
+          </div>
+        );
 
+      //publicaciones del usuario.
       case 'publicaciones':
         return (
           <div className="space-y-6">
@@ -278,7 +232,6 @@ const ProfilePage = () => {
         backPath="/dashboard"
       >
         <div className="flex w-full max-w-6xl gap-8 items-start self-start">
-          {/* Panel lateral */}
           <aside className="w-64 flex-shrink-0">
             <nav className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
               {menuItems.map((item) => (
@@ -286,11 +239,7 @@ const ProfilePage = () => {
                   key={item.key}
                   onClick={() => setActiveSection(item.key)}
                   className={`w-full text-left px-4 py-2 rounded-xl text-sm font-medium transition-colors
-                    ${activeSection === item.key
-                      ? 'bg-adogta-secondary text-white'
-                      : 'text-adogta-primary hover:bg-adogta-background'
-                    }
-                  `}
+                    ${activeSection === item.key ? 'bg-adogta-secondary text-white' : 'text-adogta-primary hover:bg-adogta-background'}`}
                 >
                   {item.label}
                 </button>
@@ -298,28 +247,31 @@ const ProfilePage = () => {
             </nav>
           </aside>
 
-          {/* Contenido principal */}
           <main className="flex-1">
             {renderSection()}
           </main>
         </div>
       </AuthLayout>
 
+      {/**Modal de editar perfil */}
       <EditProfile 
         isOpen={showEditModal} 
         onClose={() => setShowEditModal(false)} 
         userData={user} 
         onUpdate={handleUpdateProfile}
-     />
+      />
+      
+      {/**Modal de contestra cuestionario */}
       <QuestionnaireModal
         isOpen={showCuestionario}
         onClose={() => setShowCuestionario(false)}
         onSuccess={() => {
           loadUserData();
+          setUltimoFormulario(null);
+          setPuedeActualizar(false);
         }}
       />
     </>
-
   );
 };
 

@@ -25,7 +25,7 @@ export const formularioApi = {
   },
 
   /**
-   * Obtiene el último formulario contestado por el usuario autenticado.
+   * Obtiene el último formulario contestado por el usuario.
    * @returns {Promise<Object>} FormularioResponse
    */
   obtenerUltimo: async () => {
