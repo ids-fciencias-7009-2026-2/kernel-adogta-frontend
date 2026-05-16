@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import logo from '../assets/Adogta_logo.png';
 
 const Header = ({ 
@@ -8,6 +9,15 @@ const Header = ({
   title
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Construir iniciales a partir del nombre y apellido paterno
+  const iniciales = user
+    ? (user.nombres?.charAt(0) || '') + (user.apellidoPaterno?.charAt(0) || '')
+    : '';
+
+  // Indicador visual si el cuestionario no se ha completado
+  const mostrarIndicador = user && !user.envioFormulario;
 
   return (
     <header className="bg-white px-8 py-3 flex justify-between items-center shadow-sm border-b border-adogta-border relative z-10">
@@ -31,7 +41,7 @@ const Header = ({
           </button>
         )}
         
-        {/* Botones dinámicos */}
+        {/* Botones dinámicos (se mantienen) */}
         {buttons.map((button, index) => (
           <button
             key={index}
@@ -48,6 +58,26 @@ const Header = ({
             {button.label}
           </button>
         ))}
+
+        {/* Círculo de perfil con iniciales */}
+        {user && (
+          <div className="relative">
+            <button
+              onClick={() => navigate('/profile')}
+              title="Mi Perfil"
+              className="
+                w-8 h-8 rounded-full bg-adogta-secondary text-white font-bold text-xs uppercase
+                flex items-center justify-center
+                hover:scale-105 transition-transform
+              "
+            >
+              {iniciales}
+            </button>
+            {mostrarIndicador && (
+              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-adogta-secondary rounded-full border-2 border-white" />
+            )}
+          </div>
+        )}
       </div>
     </header>
   );
