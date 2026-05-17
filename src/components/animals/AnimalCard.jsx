@@ -44,6 +44,10 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
   const foto = animal.fotos?.[0] || fallback;
   const caracter = caracterDesdeEnergia(animal.nivelEnergia);
   const tamanio = TALLA_LABEL[animal.razaTalla] || '';
+  const descripcionPreview =
+    animal.descripcion?.length > 100
+      ? `${animal.descripcion.slice(0, 100)}...`
+      : animal.descripcion;
 
   const esPropia = currentUserId != null && Number(currentUserId) === Number(animal.idUsuario);
   const [enviando, setEnviando] = useState(false);
@@ -93,6 +97,12 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
         <h3 className="text-adogta-primary text-xl font-bold uppercase mb-3">
           {animal.nombre}
         </h3>
+
+        {descripcionPreview && (
+          <p className="text-sm text-gray-600 mb-3">
+            {descripcionPreview}
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-adogta-primary">
           <div>
