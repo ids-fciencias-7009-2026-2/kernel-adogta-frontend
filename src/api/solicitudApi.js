@@ -21,4 +21,8 @@ export const solicitudApi = {
     return response.data;
   },
 
+  verificarInteres: async (idPublicacion) => {
+    const response = await apiClient.get(`/api/solicitudes/verificar/${idPublicacion}`);
+    return response.data.interes_expresado;
+  },
 };
