@@ -22,5 +22,15 @@ export const formularioApi = {
   puedeResponder: async () => {
     const response = await apiClient.get('/formularios/puede-responder');
     return response.data;
-  }
+  },
+
+  /**
+   * Obtiene el último formulario contestado por el usuario.
+   * @returns {Promise<Object>} FormularioResponse
+   */
+  obtenerUltimo: async () => {
+    const response = await apiClient.get('/formularios/ultimo');
+    return response.data;
+  },
+  
 };
