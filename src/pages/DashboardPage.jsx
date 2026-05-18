@@ -96,7 +96,7 @@ const DashboardPage = () => {
     },
     ...(pendienteFormulario ? [{
       label: '',
-      onClick: () => {},
+      onClick: () => { },
       variant: 'warning-icon',
       tooltip: 'Debes completar tu perfil'
     }] : []),

@@ -7,6 +7,7 @@ import Checkbox from "../components/common/Checkbox";
 import Slider from "../components/common/Slider";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useAnimalForm } from "../hooks/useAnimalForm";
+import { razaApi } from "../api/razaApi";
 import { NIVEL_LABELS, SLIDERS, MAX_PADECIMIENTOS, MAX_FOTOS } from "../utils/animalFormHelpers";
 import dashboardBg from "../assets/Adogta_dashboard.png";
 
@@ -33,6 +34,7 @@ export default function PublicarAnimalPage() {
     razas,
     loadingRazas,
     errorRazas,
+    recargarRazas,
     razaSeleccionada,
     setRazaSeleccionada,
     nuevoPadecimiento,
@@ -52,6 +54,11 @@ export default function PublicarAnimalPage() {
   } = useAnimalForm({ esEdicion: false });
 
   const tipoSeleccionado = form.tipo || null;
+
+  const [nuevaRaza, setNuevaRaza] = useState("");
+  const [agregandoRaza, setAgregandoRaza] = useState(false);
+  const [errorAgregarRaza, setErrorAgregarRaza] = useState("");
+  const [exitoAgregarRaza, setExitoAgregarRaza] = useState("");
 
   // Filtro de razas
   const razasFiltradas = useMemo(() => {
@@ -83,6 +90,39 @@ export default function PublicarAnimalPage() {
       idRaza: raza.idRaza,
     }));
     setPaso(3);
+  }
+
+  async function agregarRaza() {
+    setErrorAgregarRaza("");
+    setExitoAgregarRaza("");
+
+    const nombreNormalizado = nuevaRaza
+      .toLowerCase()
+      .replace(/[^a-z ]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const letrasSolo = nombreNormalizado.replace(/ /g, "");
+    if (letrasSolo.length < 3) {
+      setErrorAgregarRaza("La raza que buscas no existe");
+      return;
+    }
+
+    setAgregandoRaza(true);
+    try {
+      const tipo = tipoSeleccionado === "Perro" ? "perro" : "gato";
+      const respuesta = await razaApi.add({ nombre: nuevaRaza.trim(), tipo });
+      await recargarRazas();
+      setExitoAgregarRaza(`Raza añadida: ${respuesta.nombre}`);
+      setNuevaRaza("");
+    } catch (err) {
+      const msg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.error ||
+        "La raza que buscas no existe";
+      setErrorAgregarRaza(msg);
+    } finally {
+      setAgregandoRaza(false);
+    }
   }
 
   // Pantalla de éxito
@@ -147,6 +187,36 @@ export default function PublicarAnimalPage() {
               {errorRazas}
             </div>
           )}
+
+          <div className="bg-adogta-white border border-adogta-border rounded-2xl p-5 mb-6 text-center">
+            <h3 className="font-semibold text-adogta-primary mb-2">¿No encuentras la raza?</h3>
+            <h3 className="text-sm text-adogta-primary/70 mt-4 mb-1"> Nombre de la raza </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-center justify-center ml-4">
+              <Input
+                name="nuevaRaza"
+                value={nuevaRaza}
+                onChange={(e) => setNuevaRaza(e.target.value)}
+                placeholder="Ej: Golden Retriever"
+                disabled={agregandoRaza}
+              />
+              <div className="flex items-end justify-center">
+                <Button
+                  type="button"
+                  onClick={agregarRaza}
+                  disabled={agregandoRaza || !nuevaRaza.trim()}
+                  loading={agregandoRaza}
+                >
+                  Añadir raza
+                </Button>
+              </div>
+            </div>
+            {errorAgregarRaza && (
+              <p className="text-sm text-adogta-secondary mt-3">{errorAgregarRaza}</p>
+            )}
+            {exitoAgregarRaza && (
+              <p className="text-sm text-adogta-primary mt-3">{exitoAgregarRaza}</p>
+            )}
+          </div>
 
           {!loadingRazas && !errorRazas && razasFiltradas.length === 0 && (
             <p className="text-adogta-primary">No hay razas disponibles.</p>

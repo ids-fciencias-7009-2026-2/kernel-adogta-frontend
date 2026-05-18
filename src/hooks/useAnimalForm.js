@@ -62,25 +62,41 @@ export function useAnimalForm({ esEdicion = false, idAnimal = null } = {}) {
   const [loadingAnimal, setLoadingAnimal] = useState(esEdicion);
   const [errorAnimal, setErrorAnimal] = useState('');
 
+  const recargarRazas = async () => {
+    setLoadingRazas(true);
+    setErrorRazas('');
+    try {
+      const data = await razaApi.getAll();
+      setRazas(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setErrorRazas(
+        err.response?.data?.error || err.message || 'No se pudieron cargar las razas.'
+      );
+    } finally {
+      setLoadingRazas(false);
+    }
+  };
+
   // Cargamos las razas.
   useEffect(() => {
     let cancelado = false;
-    setLoadingRazas(true);
-    setErrorRazas('');
-    razaApi
-      .getAll()
-      .then((data) => {
+    const cargar = async () => {
+      if (cancelado) return;
+      setLoadingRazas(true);
+      setErrorRazas('');
+      try {
+        const data = await razaApi.getAll();
         if (!cancelado) setRazas(Array.isArray(data) ? data : []);
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!cancelado)
           setErrorRazas(
             err.response?.data?.error || err.message || 'No se pudieron cargar las razas.'
           );
-      })
-      .finally(() => {
+      } finally {
         if (!cancelado) setLoadingRazas(false);
-      });
+      }
+    };
+    cargar();
     return () => { cancelado = true; };
   }, []);
 
@@ -273,6 +289,7 @@ export function useAnimalForm({ esEdicion = false, idAnimal = null } = {}) {
     razas,
     loadingRazas,
     errorRazas,
+    recargarRazas,
     razaSeleccionada,
     setRazaSeleccionada,
     loadingAnimal,
