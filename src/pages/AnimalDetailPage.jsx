@@ -221,11 +221,11 @@ export default function AnimalDetailPage() {
         <AnimalGallery fotos={animal.fotos} nombre={animal.nombre} tipo={animal.tipo} />
 
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-          <header>
-            <h1 className="text-3xl md:text-4xl font-bold text-adogta-primary">
+          <header className="text-left">
+            <h1 className="text-3xl md:text-4xl font-bold text-adogta-primary text-left">
               {animal.nombre}
             </h1>
-            <p className="mt-2 text-sm text-adogta-primary opacity-80">
+            <p className="mt-2 text-sm text-adogta-primary opacity-80 text-left">
               {animal.tipo}
               {animal.razaNombre ? ` · ${animal.razaNombre}` : ''}
               {talla ? ` · ${talla}` : ''}
@@ -235,15 +235,17 @@ export default function AnimalDetailPage() {
           </header>
 
           {animal.descripcion && animal.descripcion.trim() !== '' && (
-            <section>
-              <h2 className="text-adogta-primary font-semibold mb-2">Sobre {animal.nombre}</h2>
-              <p className="max-w-prose text-adogta-primary whitespace-pre-line">
+            <section className="text-left">
+              <h2 className="text-adogta-primary font-semibold mb-2 text-left">
+                Sobre {animal.nombre}
+              </h2>
+              <p className="max-w-prose text-adogta-primary whitespace-pre-line text-left">
                 {animal.descripcion}
               </p>
             </section>
           )}
 
-          <section className="flex flex-wrap gap-2">
+          <section className="flex flex-wrap justify-start gap-2">
             <Chip tone={vacunacionPositiva ? 'positivo' : 'pendiente'}>
               Vacunación: {animal.estadoVacunacion}
             </Chip>
@@ -255,8 +257,8 @@ export default function AnimalDetailPage() {
             </Chip>
           </section>
 
-          <section>
-            <h2 className="text-adogta-primary font-semibold mb-3">Carácter</h2>
+          <section className="text-left">
+            <h2 className="text-adogta-primary font-semibold mb-3 text-left">Carácter</h2>
             <div className="divide-y divide-gray-100">
               <NivelRow icono="⚡" label="Nivel de energía" valor={animal.nivelEnergia} />
               <NivelRow icono="🧘" label="Independencia" valor={animal.independencia} />
@@ -266,9 +268,11 @@ export default function AnimalDetailPage() {
           </section>
 
           {animal.padecimientos && animal.padecimientos.length > 0 && (
-            <section>
-              <h2 className="text-adogta-primary font-semibold mb-2">Condiciones de salud</h2>
-              <div className="flex flex-wrap gap-2">
+            <section className="text-left">
+              <h2 className="text-adogta-primary font-semibold mb-2 text-left">
+                Condiciones de salud
+              </h2>
+              <div className="flex flex-wrap justify-start gap-2">
                 {animal.padecimientos.map((p, i) => (
                   <Chip key={`${p}-${i}`} tone="pendiente">{p}</Chip>
                 ))}
@@ -277,31 +281,33 @@ export default function AnimalDetailPage() {
           )}
 
           {!esPropia && (
-            <section className="pt-2">
-              {enviada ? (
-                <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-3 font-semibold">
-                  ¡Solicitud enviada!
-                </p>
-              ) : (
-                <Button
-                  onClick={handleInteres}
-                  loading={enviando}
-                  disabled={enviando}
-                  fullWidth
-                >
-                  Me interesa adoptar
-                </Button>
-              )}
-              {errorInteres && !enviada && (
-                <p className="mt-2 text-center text-xs text-red-600">{errorInteres}</p>
-              )}
+            <section className="pt-2 flex flex-col items-center">
+              <div className="w-full max-w-md">
+                {enviada ? (
+                  <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-3 font-semibold">
+                    ¡Solicitud enviada!
+                  </p>
+                ) : (
+                  <Button
+                    onClick={handleInteres}
+                    loading={enviando}
+                    disabled={enviando}
+                    fullWidth
+                  >
+                    Me interesa adoptar
+                  </Button>
+                )}
+                {errorInteres && !enviada && (
+                  <p className="mt-2 text-center text-xs text-red-600">{errorInteres}</p>
+                )}
+              </div>
             </section>
           )}
         </div>
 
         {(cargandoRelacionados || relacionados.length > 0) && (
-          <section aria-label="Más mascotas disponibles">
-            <h2 className="text-2xl md:text-3xl font-bold text-adogta-primary mb-4">
+          <section aria-label="Más mascotas disponibles" className="text-left">
+            <h2 className="text-2xl md:text-3xl font-bold text-adogta-primary mb-4 text-left">
               {animal.tipo === 'Perro'
                 ? 'Más perros disponibles'
                 : 'Más gatos disponibles'}
