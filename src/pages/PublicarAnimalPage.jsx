@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 import AuthLayout from "../layouts/AuthLayout";
 import Button from "../components/common/Button";
 import Input from "../components/common/Input";
@@ -8,8 +7,8 @@ import Slider from "../components/common/Slider";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useAnimalForm } from "../hooks/useAnimalForm";
 import { razaApi } from "../api/razaApi";
-import { NIVEL_LABELS, SLIDERS, MAX_PADECIMIENTOS, MAX_FOTOS } from "../utils/animalFormHelpers";
-import dashboardBg from "../assets/Adogta_dashboard.png";
+import { LEVEL_LABELS, SLIDERS, MAX_AILMENTS, MAX_PHOTOS } from "../utils/animalFormHelpers";
+import dashboardBg from "../assets/Adogta_dashboartemperamentd.png";
 
 const layoutProps = {
   title: "Publicar Animal",
@@ -19,7 +18,7 @@ const layoutProps = {
 };
 
 export default function PublicarAnimalPage() {
-  const navigate = useNavigate();
+
   const [paso, setPaso] = useState(1);
 
   const {
@@ -96,13 +95,8 @@ export default function PublicarAnimalPage() {
     setErrorAgregarRaza("");
     setExitoAgregarRaza("");
 
-    const nombreNormalizado = nuevaRaza
-      .toLowerCase()
-      .replace(/[^a-z ]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-    const letrasSolo = nombreNormalizado.replace(/ /g, "");
-    if (letrasSolo.length < 3) {
+    const nombreNormalizado = nuevaRaza.toLowerCase().replace(/[^a-z]/g, "");
+    if (nombreNormalizado.length < 3) {
       setErrorAgregarRaza("La raza que buscas no existe");
       return;
     }
