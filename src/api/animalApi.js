@@ -39,6 +39,17 @@ export const animalApi = {
   },
 
   /**
+   * GET /api/animales/{idAnimal} — obtiene el detalle público de una publicación.
+   *
+   * @param {number} idAnimal
+   * @returns {Promise<Object>} AnimalListItemResponse del animal.
+   */
+  obtener: async (idAnimal) => {
+    const response = await apiClient.get(`/api/animales/${idAnimal}`);
+    return response.data;
+  },
+
+  /**
    * GET /api/animales/{idAnimal}/editar — obtiene los datos completos de un animal para edición.
    * Requiere token de sesión. Solo el dueño puede acceder.
    *
