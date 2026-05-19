@@ -9,6 +9,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
 import EditarAnimalPage from './pages/EditarAnimalPage';
+import MisSolicitudesPage from './pages/MisSolicitudesPage';
 
 function ProtectedRoute({ isAuthenticated, children }) {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -65,6 +66,16 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute isAuthenticated={autenticado}>
                         <EditarAnimalPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Ruta para checar las solicitudes de adopcion */ }
+            <Route
+                path="/mis-solicitudes"
+                element={
+                    <ProtectedRoute isAuthenticated={autenticado}>
+                        <MisSolicitudesPage />
                     </ProtectedRoute>
                 }
             />

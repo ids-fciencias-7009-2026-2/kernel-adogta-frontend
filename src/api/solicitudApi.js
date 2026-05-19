@@ -25,4 +25,10 @@ export const solicitudApi = {
     const response = await apiClient.get(`/api/solicitudes/verificar/${idPublicacion}`);
     return response.data.interes_expresado;
   },
+
+  getMisSolicitudes: async () => {
+    const response = await apiClient.get('/api/solicitudes/mis-solicitudes');
+    return response.data;
+  },
+  
 };
