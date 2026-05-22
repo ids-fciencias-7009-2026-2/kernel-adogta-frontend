@@ -7,6 +7,7 @@ import {
   fallbackImg,
   caracterDesdeEnergia,
   formatEdad,
+  truncarTexto,
 } from '../../utils/animalDisplayHelpers';
 
 /**
@@ -26,6 +27,8 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
   const foto = animal.fotos?.[0] || fallback;
   const caracter = caracterDesdeEnergia(animal.nivelEnergia);
   const tamanio = TALLA_LABEL[animal.razaTalla] || '';
+  const descripcionLimpia = animal.descripcion?.trim() || '';
+  const descPreview = truncarTexto(descripcionLimpia, 50);
 
   const esPropia = currentUserId != null && Number(currentUserId) === Number(animal.idUsuario);
   const [enviando, setEnviando] = useState(false);
@@ -91,6 +94,15 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
         <h3 className="text-adogta-primary text-xl font-bold uppercase mb-3">
           {animal.nombre}
         </h3>
+
+        {descPreview && (
+          <p
+            className="text-sm text-adogta-primary/70 mb-3"
+            title={descripcionLimpia}
+          >
+            {descPreview}
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-adogta-primary">
           <div>
