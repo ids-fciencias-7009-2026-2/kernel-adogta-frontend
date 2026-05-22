@@ -32,3 +32,16 @@ export function formatEdad(meses) {
   const anios = Math.floor(meses / 12);
   return `${anios} ${anios === 1 ? 'año' : 'años'}`;
 }
+
+/**
+ * Recorta un texto a un máximo de caracteres y le agrega '...' si lo supera.
+ * @param {string} texto - Texto a recortar.
+ * @param {number} max - Máximo de caracteres (por defecto 50).
+ * @returns {string} Texto recortado, o '' si no hay texto.
+ */
+export function truncarTexto(texto, max = 50) {
+  if (!texto) return '';
+  const limpio = texto.trim();
+  if (limpio.length > max) return limpio.slice(0, max) + '...';
+  return limpio;
+}
