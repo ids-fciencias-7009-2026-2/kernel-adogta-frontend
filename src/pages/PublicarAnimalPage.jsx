@@ -7,8 +7,8 @@ import Slider from "../components/common/Slider";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useAnimalForm } from "../hooks/useAnimalForm";
 import { razaApi } from "../api/razaApi";
-import { LEVEL_LABELS, SLIDERS, MAX_AILMENTS, MAX_PHOTOS } from "../utils/animalFormHelpers";
-import dashboardBg from "../assets/Adogta_dashboartemperamentd.png";
+import { NIVEL_LABELS, SLIDERS, MAX_PADECIMIENTOS, MAX_FOTOS } from "../utils/animalFormHelpers";
+import dashboardBg from "../assets/Adogta_dashboard.png";
 
 const layoutProps = {
   title: "Publicar Animal",
