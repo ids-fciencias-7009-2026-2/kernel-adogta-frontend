@@ -89,17 +89,17 @@ const DashboardPage = () => {
       onClick: () => navigate('/publicar'),
       variant: 'primary'
     },
+    {
+      label: 'Términos y Condiciones',
+      onClick: () => setShowTermsModal(true),
+      variant: 'secondary'
+    },
     ...(pendienteFormulario ? [{
       label: '',
       onClick: () => { },
       variant: 'warning-icon',
       tooltip: 'Debes completar tu perfil'
-    }] : []),
-    {
-      label: 'Términos y Condiciones',
-      onClick: () => setShowTermsModal(true),
-      variant: 'secondary'
-    }
+    }] : [])
   ];
 
   return (

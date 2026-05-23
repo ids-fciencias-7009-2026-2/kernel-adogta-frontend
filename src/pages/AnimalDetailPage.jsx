@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Button from '../components/common/Button';
+import AnimalGallery from '../components/animals/AnimalGallery';
 import { animalApi } from '../api/animalApi';
 import { solicitudApi } from '../api/solicitudApi';
 import { useAuth } from '../hooks/useAuth';
@@ -13,6 +14,8 @@ import {
 } from '../utils/animalDisplayHelpers';
 import { NIVEL_LABELS } from '../utils/animalFormHelpers';
 import dashboardBackground from '../assets/Adogta_dashboard.png';
+
+const MAX_RELACIONADOS = 4;
 
 function NivelDots({ valor }) {
   const v = Math.max(0, Math.min(5, Number(valor) || 0));
@@ -56,38 +59,13 @@ function Chip({ tone, children }) {
   );
 }
 
-function Galeria({ fotos, nombre, tipo }) {
-  const fallback = fallbackImg(tipo);
-  const lista = fotos && fotos.length > 0 ? fotos : [fallback];
-
-  if (lista.length === 1) {
-    return (
-      <img
-        src={lista[0]}
-        alt={nombre}
-        onError={(e) => { e.currentTarget.src = fallback; }}
-        className="w-full max-h-[500px] object-cover rounded-2xl shadow-lg"
-      />
-    );
-  }
-
-  const colsClass =
-    lista.length <= 3
-      ? 'grid-cols-2 md:grid-cols-3'
-      : 'grid-cols-2 md:grid-cols-4';
-  const heightClass = lista.length <= 3 ? 'h-64 md:h-72' : 'h-48 md:h-56';
-
+function MiniCardSkeleton() {
   return (
-    <div className={`grid ${colsClass} gap-2`}>
-      {lista.map((src, i) => (
-        <img
-          key={`${src}-${i}`}
-          src={src}
-          alt={`${nombre} ${i + 1}`}
-          onError={(e) => { e.currentTarget.src = fallback; }}
-          className={`w-full ${heightClass} object-cover rounded-2xl shadow`}
-        />
-      ))}
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+      <div className="aspect-square bg-gray-200 animate-pulse" />
+      <div className="p-3">
+        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+      </div>
     </div>
   );
 }
@@ -106,10 +84,17 @@ export default function AnimalDetailPage() {
   const [enviada, setEnviada] = useState(false);
   const [errorInteres, setErrorInteres] = useState('');
 
+  const [listaCompleta, setListaCompleta] = useState([]);
+  const [cargandoRelacionados, setCargandoRelacionados] = useState(true);
+
+  // Efecto A: fetch del animal por idAnimal.
   useEffect(() => {
     let cancelado = false;
     setCargando(true);
     setError('');
+    setAnimal(null);
+    setEnviada(false);
+    setErrorInteres('');
     animalApi.obtener(idAnimal)
       .then((data) => {
         if (cancelado) return;
@@ -128,6 +113,37 @@ export default function AnimalDetailPage() {
       });
     return () => { cancelado = true; };
   }, [idAnimal]);
+
+  // Efecto B: fetch de la lista completa para derivar relacionados + reset de scroll.
+  useEffect(() => {
+    let cancelado = false;
+    setCargandoRelacionados(true);
+    window.scrollTo(0, 0);
+    animalApi.listar()
+      .then((data) => {
+        if (cancelado) return;
+        setListaCompleta(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (cancelado) return;
+        setListaCompleta([]);
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoRelacionados(false);
+      });
+    return () => { cancelado = true; };
+  }, [idAnimal]);
+
+  const relacionados = useMemo(() => {
+    if (!animal || !Array.isArray(listaCompleta)) return [];
+    return listaCompleta
+      .filter(
+        (a) =>
+          a.tipo === animal.tipo &&
+          Number(a.idAnimal) !== Number(animal.idAnimal)
+      )
+      .slice(0, MAX_RELACIONADOS);
+  }, [animal, listaCompleta]);
 
   const handleInteres = async () => {
     if (!animal) return;
@@ -202,14 +218,14 @@ export default function AnimalDetailPage() {
       buttons={headerButtons}
     >
       <div className="w-full max-w-4xl space-y-8">
-        <Galeria fotos={animal.fotos} nombre={animal.nombre} tipo={animal.tipo} />
+        <AnimalGallery fotos={animal.fotos} nombre={animal.nombre} tipo={animal.tipo} />
 
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-          <header>
-            <h1 className="text-3xl md:text-4xl font-bold text-adogta-primary">
+          <header className="text-left">
+            <h1 className="text-3xl md:text-4xl font-bold text-adogta-primary text-left">
               {animal.nombre}
             </h1>
-            <p className="mt-2 text-sm text-adogta-primary opacity-80">
+            <p className="mt-2 text-sm text-adogta-primary opacity-80 text-left">
               {animal.tipo}
               {animal.razaNombre ? ` · ${animal.razaNombre}` : ''}
               {talla ? ` · ${talla}` : ''}
@@ -219,15 +235,17 @@ export default function AnimalDetailPage() {
           </header>
 
           {animal.descripcion && animal.descripcion.trim() !== '' && (
-            <section>
-              <h2 className="text-adogta-primary font-semibold mb-2">Sobre {animal.nombre}</h2>
-              <p className="max-w-prose text-adogta-primary whitespace-pre-line">
+            <section className="text-left">
+              <h2 className="text-adogta-primary font-semibold mb-2 text-left">
+                Sobre {animal.nombre}
+              </h2>
+              <p className="max-w-prose text-adogta-primary whitespace-pre-line text-left">
                 {animal.descripcion}
               </p>
             </section>
           )}
 
-          <section className="flex flex-wrap gap-2">
+          <section className="flex flex-wrap justify-start gap-2">
             <Chip tone={vacunacionPositiva ? 'positivo' : 'pendiente'}>
               Vacunación: {animal.estadoVacunacion}
             </Chip>
@@ -239,8 +257,8 @@ export default function AnimalDetailPage() {
             </Chip>
           </section>
 
-          <section>
-            <h2 className="text-adogta-primary font-semibold mb-3">Carácter</h2>
+          <section className="text-left">
+            <h2 className="text-adogta-primary font-semibold mb-3 text-left">Carácter</h2>
             <div className="divide-y divide-gray-100">
               <NivelRow icono="⚡" label="Nivel de energía" valor={animal.nivelEnergia} />
               <NivelRow icono="🧘" label="Independencia" valor={animal.independencia} />
@@ -250,9 +268,11 @@ export default function AnimalDetailPage() {
           </section>
 
           {animal.padecimientos && animal.padecimientos.length > 0 && (
-            <section>
-              <h2 className="text-adogta-primary font-semibold mb-2">Condiciones de salud</h2>
-              <div className="flex flex-wrap gap-2">
+            <section className="text-left">
+              <h2 className="text-adogta-primary font-semibold mb-2 text-left">
+                Condiciones de salud
+              </h2>
+              <div className="flex flex-wrap justify-start gap-2">
                 {animal.padecimientos.map((p, i) => (
                   <Chip key={`${p}-${i}`} tone="pendiente">{p}</Chip>
                 ))}
@@ -261,27 +281,82 @@ export default function AnimalDetailPage() {
           )}
 
           {!esPropia && (
-            <section className="pt-2">
-              {enviada ? (
-                <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-3 font-semibold">
-                  ¡Solicitud enviada!
-                </p>
-              ) : (
-                <Button
-                  onClick={handleInteres}
-                  loading={enviando}
-                  disabled={enviando}
-                  fullWidth
-                >
-                  Me interesa adoptar
-                </Button>
-              )}
-              {errorInteres && !enviada && (
-                <p className="mt-2 text-center text-xs text-red-600">{errorInteres}</p>
-              )}
+            <section className="pt-2 flex flex-col items-center">
+              <div className="w-full max-w-md">
+                {enviada ? (
+                  <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-3 font-semibold">
+                    ¡Solicitud enviada!
+                  </p>
+                ) : (
+                  <Button
+                    onClick={handleInteres}
+                    loading={enviando}
+                    disabled={enviando}
+                    fullWidth
+                  >
+                    Me interesa adoptar
+                  </Button>
+                )}
+                {errorInteres && !enviada && (
+                  <p className="mt-2 text-center text-xs text-red-600">{errorInteres}</p>
+                )}
+              </div>
             </section>
           )}
         </div>
+
+        {(cargandoRelacionados || relacionados.length > 0) && (
+          <section aria-label="Más mascotas disponibles" className="text-left">
+            <h2 className="text-2xl md:text-3xl font-bold text-adogta-primary mb-4 text-left">
+              {animal.tipo === 'Perro'
+                ? 'Más perros disponibles'
+                : 'Más gatos disponibles'}
+            </h2>
+
+            {cargandoRelacionados ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Array.from({ length: MAX_RELACIONADOS }).map((_, i) => (
+                  <MiniCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {relacionados.map((r) => {
+                  const fb = fallbackImg(r.tipo);
+                  const foto = r.fotos?.[0] || fb;
+                  const irADetalle = () => navigate(`/animales/${r.idAnimal}`);
+                  return (
+                    <article
+                      key={r.idAnimal}
+                      role="button"
+                      tabIndex={0}
+                      onClick={irADetalle}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          irADetalle();
+                        }
+                      }}
+                      className="bg-white rounded-2xl shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow focus:outline-none focus:ring-2 focus:ring-adogta-secondary"
+                    >
+                      <img
+                        src={foto}
+                        alt={r.nombre}
+                        onError={(e) => { e.currentTarget.src = fb; }}
+                        className="w-full aspect-square object-cover"
+                      />
+                      <div className="p-3">
+                        <h3 className="text-adogta-primary font-semibold truncate">
+                          {r.nombre}
+                        </h3>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </AuthLayout>
   );
