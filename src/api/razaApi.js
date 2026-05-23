@@ -30,4 +30,17 @@ export const razaApi = {
     return response.data;
   },
 
+    /**
+     * Agrega una nueva raza consultando la API externa.
+     *
+     * @param {Object} payload
+     * @param {string} payload.nombre
+     * @param {string} payload.tipo - "perro" | "gato"
+     * @returns {Promise<Object>} Raza creada o existente.
+     */
+    add: async (payload) => {
+      const response = await apiClient.post('/api/razas', payload);
+      return response.data;
+    },
+
 };
