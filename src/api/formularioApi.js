@@ -25,6 +25,15 @@ export const formularioApi = {
   },
 
   /**
+   * Obtiene el último formulario contestado por el usuario.
+   * @returns {Promise<Object>} FormularioResponse
+   */
+  obtenerUltimo: async () => {
+    const response = await apiClient.get('/formularios/ultimo');
+    return response.data;
+  },
+
+  /**
    * Verifica si el usuario aún tiene pendiente contestar el cuestionario.
    * @returns {Promise<boolean>} true si está pendiente (202), false si ya lo contestó (200).
    */

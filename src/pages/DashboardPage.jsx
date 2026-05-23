@@ -89,11 +89,6 @@ const DashboardPage = () => {
       onClick: () => navigate('/publicar'),
       variant: 'primary'
     },
-    {
-      label: 'Mi Perfil',
-      onClick: () => navigate('/profile'),
-      variant: 'primary'
-    },
     ...(pendienteFormulario ? [{
       label: '',
       onClick: () => { },
