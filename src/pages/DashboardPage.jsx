@@ -4,6 +4,7 @@ import AuthLayout from '../layouts/AuthLayout';
 import Terms from '../modals/Terms';
 import { useAuth } from '../hooks/useAuth';
 import { animalApi } from '../api/animalApi';
+import { formularioApi } from '../api/formularioApi';
 import AnimalCard from '../components/animals/AnimalCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import dashboardBackground from '../assets/Adogta_dashboard.png';
@@ -16,6 +17,7 @@ const DashboardPage = () => {
   const [cargandoAnimales, setCargandoAnimales] = useState(true);
   const [errorAnimales, setErrorAnimales] = useState('');
   const [filtroTipo, setFiltroTipo] = useState(null);
+  const [pendienteFormulario, setPendienteFormulario] = useState(false);
 
   const [eliminando, setEliminando] = useState(null);
 
@@ -53,6 +55,12 @@ const DashboardPage = () => {
     return () => { cancelado = true; };
   }, []);
 
+  useEffect(() => {
+    formularioApi.pendienteContestar()
+      .then((pendiente) => setPendienteFormulario(pendiente))
+      .catch(() => setPendienteFormulario(false));
+  }, []);
+
   const conteos = useMemo(() => {
     const c = { Perro: 0, Gato: 0 };
     for (const a of animales) {
@@ -81,6 +89,7 @@ const DashboardPage = () => {
       onClick: () => navigate('/publicar'),
       variant: 'primary'
     },
+    
     {
       label: 'Mi Perfil',
       onClick: () => navigate('/profile'),
@@ -96,7 +105,13 @@ const DashboardPage = () => {
       label: 'Términos y Condiciones',
       onClick: () => setShowTermsModal(true),
       variant: 'secondary'
-    }
+    },
+    ...(pendienteFormulario ? [{
+      label: '',
+      onClick: () => { },
+      variant: 'warning-icon',
+      tooltip: 'Debes completar tu perfil'
+    }] : [])
   ];
 
   return (

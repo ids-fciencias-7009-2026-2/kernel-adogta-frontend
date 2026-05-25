@@ -2,35 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { solicitudApi } from '../../api/solicitudApi';
 import Button from '../common/Button';
-
-const TALLA_LABEL = {
-  1: 'Muy pequeño (menos de 5 kg)',
-  2: 'Pequeño (de 5 a 10 kg)',
-  3: 'Mediano (de 10 a 25 kg)',
-  4: 'Grande (de 25 a 45 kg)',
-  5: 'Muy grande (más de 45 kg)',
-};
-
-const FALLBACK_IMG_PERRO =
-  'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70';
-const FALLBACK_IMG_GATO =
-  'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=600&q=70';
-
-function caracterDesdeEnergia(nivelEnergia) {
-  if (nivelEnergia >= 4) return 'Activo';
-  if (nivelEnergia <= 2) return 'Tranquilo';
-  return 'Equilibrado';
-}
-
-function formatEdad(meses) {
-  if (meses == null) return '';
-  if (meses < 12) return `${meses} ${meses === 1 ? 'mes' : 'meses'}`;
-  const anios = Math.floor(meses / 12);
-  return `${anios} ${anios === 1 ? 'año' : 'años'}`;
-}
+import {
+  TALLA_LABEL,
+  fallbackImg,
+  caracterDesdeEnergia,
+  formatEdad,
+  truncarTexto,
+} from '../../utils/animalDisplayHelpers';
 
 /**
  * Tarjeta que muestra la información de un animal en adopción.
+ * Click en la tarjeta navega al detalle; los botones internos detienen
+ * la propagación para no disparar la navegación.
  *
  * @param {Object}   props
  * @param {Object}   props.animal         - Datos del animal.
@@ -40,10 +23,12 @@ function formatEdad(meses) {
  */
 export default function AnimalCard({ animal, currentUserId, onEliminar, eliminando }) {
   const navigate = useNavigate();
-  const fallback = animal.tipo === 'Gato' ? FALLBACK_IMG_GATO : FALLBACK_IMG_PERRO;
+  const fallback = fallbackImg(animal.tipo);
   const foto = animal.fotos?.[0] || fallback;
   const caracter = caracterDesdeEnergia(animal.nivelEnergia);
   const tamanio = TALLA_LABEL[animal.razaTalla] || '';
+  const descripcionLimpia = animal.descripcion?.trim() || '';
+  const descPreview = truncarTexto(descripcionLimpia, 50);
 
   const esPropia = currentUserId != null && Number(currentUserId) === Number(animal.idUsuario);
   const [enviando, setEnviando] = useState(false);
@@ -65,7 +50,17 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
     };
   }, [animal.idPublicacion, esPropia]);
 
-  const handleInteres = async () => {
+  const irADetalle = () => navigate(`/animales/${animal.idAnimal}`);
+
+  const handleCardKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      irADetalle();
+    }
+  };
+
+  const handleInteres = async (e) => {
+    e.stopPropagation();
     setErrorInteres('');
     setEnviando(true);
     try {
@@ -90,7 +85,13 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
   };
 
   return (
-    <article className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={irADetalle}
+      onKeyDown={handleCardKeyDown}
+      className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col cursor-pointer hover:shadow-2xl transition-shadow focus:outline-none focus:ring-2 focus:ring-adogta-secondary"
+    >
       <div className="relative h-56 bg-adogta-background">
         <img
           src={foto}
@@ -108,6 +109,15 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
         <h3 className="text-adogta-primary text-xl font-bold uppercase mb-3">
           {animal.nombre}
         </h3>
+
+        {descPreview && (
+          <p
+            className="text-sm text-adogta-primary/70 mb-3"
+            title={descripcionLimpia}
+          >
+            {descPreview}
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-adogta-primary">
           <div>
@@ -135,13 +145,19 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
           {esPropia ? (
             <div className="flex gap-2">
               <button
-                onClick={() => navigate(`/editar-animal/${animal.idAnimal}`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/editar-animal/${animal.idAnimal}`);
+                }}
                 className="flex-1 bg-adogta-background text-adogta-primary font-semibold py-2 px-4 rounded-full hover:bg-adogta-secondary/20 transition-colors"
               >
                 Editar
               </button>
               <button
-                onClick={() => onEliminar(animal.idPublicacion)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEliminar(animal.idPublicacion);
+                }}
                 disabled={eliminando === animal.idPublicacion}
                 className="flex-1 bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-full hover:bg-red-200 transition-colors disabled:opacity-50"
               >

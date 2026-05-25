@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 import AuthLayout from "../layouts/AuthLayout";
 import Button from "../components/common/Button";
 import Input from "../components/common/Input";
@@ -7,6 +6,7 @@ import Checkbox from "../components/common/Checkbox";
 import Slider from "../components/common/Slider";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useAnimalForm } from "../hooks/useAnimalForm";
+import { razaApi } from "../api/razaApi";
 import { NIVEL_LABELS, SLIDERS, MAX_PADECIMIENTOS, MAX_FOTOS } from "../utils/animalFormHelpers";
 import dashboardBg from "../assets/Adogta_dashboard.png";
 
@@ -18,8 +18,9 @@ const layoutProps = {
 };
 
 export default function PublicarAnimalPage() {
-  const navigate = useNavigate();
+
   const [paso, setPaso] = useState(1);
+  const [busquedaRaza, setBusquedaRaza] = useState("");
 
   const {
     form,
@@ -33,6 +34,7 @@ export default function PublicarAnimalPage() {
     razas,
     loadingRazas,
     errorRazas,
+    recargarRazas,
     razaSeleccionada,
     setRazaSeleccionada,
     nuevoPadecimiento,
@@ -53,12 +55,23 @@ export default function PublicarAnimalPage() {
 
   const tipoSeleccionado = form.tipo || null;
 
+  const [nuevaRaza, setNuevaRaza] = useState("");
+  const [agregandoRaza, setAgregandoRaza] = useState(false);
+  const [errorAgregarRaza, setErrorAgregarRaza] = useState("");
+  const [exitoAgregarRaza, setExitoAgregarRaza] = useState("");
+
   // Filtro de razas
   const razasFiltradas = useMemo(() => {
     if (!razas.length) return [];
     if (razas.some((r) => r.tipo)) return razas.filter((r) => r.tipo === tipoSeleccionado);
     return razas;
   }, [razas, tipoSeleccionado]);
+
+  const razasFiltradasYBuscadas = useMemo(() => {
+    const q = busquedaRaza.trim().toLowerCase();
+    if (!q) return razasFiltradas;
+    return razasFiltradas.filter((r) => r.nombre.toLowerCase().includes(q));
+  }, [razasFiltradas, busquedaRaza]);
 
   // Navegación entre las fases del formulario
   function seleccionarTipo(tipo) {
@@ -70,6 +83,7 @@ export default function PublicarAnimalPage() {
     setPaso(1);
     setForm((prev) => ({ ...prev, tipo: "" }));
     setRazaSeleccionada(null);
+    setBusquedaRaza("");
   }
 
   function seleccionarRaza(raza) {
@@ -83,6 +97,34 @@ export default function PublicarAnimalPage() {
       idRaza: raza.idRaza,
     }));
     setPaso(3);
+  }
+
+  async function agregarRaza() {
+    setErrorAgregarRaza("");
+    setExitoAgregarRaza("");
+
+    const nombreNormalizado = nuevaRaza.toLowerCase().replace(/[^a-z]/g, "");
+    if (nombreNormalizado.length < 3) {
+      setErrorAgregarRaza("La raza que buscas no existe");
+      return;
+    }
+
+    setAgregandoRaza(true);
+    try {
+      const tipo = tipoSeleccionado === "Perro" ? "perro" : "gato";
+      const respuesta = await razaApi.add({ nombre: nuevaRaza.trim(), tipo });
+      await recargarRazas();
+      setExitoAgregarRaza(`Raza añadida: ${respuesta.nombre}`);
+      setNuevaRaza("");
+    } catch (err) {
+      const msg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.error ||
+        "La raza que buscas no existe";
+      setErrorAgregarRaza(msg);
+    } finally {
+      setAgregandoRaza(false);
+    }
   }
 
   // Pantalla de éxito
@@ -148,13 +190,72 @@ export default function PublicarAnimalPage() {
             </div>
           )}
 
+          <div className="bg-adogta-white border border-adogta-border rounded-2xl p-5 mb-6 text-center">
+            <h3 className="font-semibold text-adogta-primary mb-2">¿No encuentras la raza?</h3>
+            <h3 className="text-sm text-adogta-primary/70 mt-4 mb-1"> Nombre de la raza </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-center justify-center ml-4">
+              <Input
+                name="nuevaRaza"
+                value={nuevaRaza}
+                onChange={(e) => setNuevaRaza(e.target.value)}
+                placeholder="Ej: Golden Retriever"
+                disabled={agregandoRaza}
+              />
+              <div className="flex items-end justify-center">
+                <Button
+                  type="button"
+                  onClick={agregarRaza}
+                  disabled={agregandoRaza || !nuevaRaza.trim()}
+                  loading={agregandoRaza}
+                >
+                  Añadir raza
+                </Button>
+              </div>
+            </div>
+            {errorAgregarRaza && (
+              <p className="text-sm text-adogta-secondary mt-3">{errorAgregarRaza}</p>
+            )}
+            {exitoAgregarRaza && (
+              <p className="text-sm text-adogta-primary mt-3">{exitoAgregarRaza}</p>
+            )}
+          </div>
+
           {!loadingRazas && !errorRazas && razasFiltradas.length === 0 && (
             <p className="text-adogta-primary">No hay razas disponibles.</p>
           )}
 
           {!loadingRazas && !errorRazas && razasFiltradas.length > 0 && (
+            <div className="relative mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-adogta-primary/60 pointer-events-none"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                value={busquedaRaza}
+                onChange={(e) => setBusquedaRaza(e.target.value)}
+                placeholder="Buscar raza por nombre..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-adogta-border focus:outline-none focus:ring-2 focus:ring-adogta-secondary bg-white text-adogta-primary"
+              />
+            </div>
+          )}
+
+          {!loadingRazas && !errorRazas && razasFiltradas.length > 0 && razasFiltradasYBuscadas.length === 0 && (
+            <p className="text-center text-adogta-primary opacity-70 p-8">
+              Sin resultados para "{busquedaRaza}"
+            </p>
+          )}
+
+          {!loadingRazas && !errorRazas && razasFiltradasYBuscadas.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {razasFiltradas.map((raza) => (
+              {razasFiltradasYBuscadas.map((raza) => (
                 <button
                   key={raza.idRaza}
                   onClick={() => seleccionarRaza(raza)}
