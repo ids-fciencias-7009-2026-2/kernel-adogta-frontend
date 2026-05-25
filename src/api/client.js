@@ -23,7 +23,7 @@ const apiClient = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('token');
+    const token = sessionStorage.getItem('adminToken') || sessionStorage.getItem('token');
     
     if (token) {
       config.headers.Authorization = token;
