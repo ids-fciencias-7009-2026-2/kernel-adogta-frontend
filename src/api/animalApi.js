@@ -97,4 +97,17 @@ export const animalApi = {
     return response.data 
   },
 
+
+  /**
+   * 
+   * GET /api/animales/recomenados - obtener todas las publicaciones que son recomendadas
+   * con la encuesta.
+   * 
+   * @returns {Promise<Object>} { datos de las publicaciones que hacen match con el usuario}
+   */
+  getRecomendados: async () => {
+    const response = await apiClient.get('/api/animales/recomendados');
+    return response.data;
+  },
+
 };
