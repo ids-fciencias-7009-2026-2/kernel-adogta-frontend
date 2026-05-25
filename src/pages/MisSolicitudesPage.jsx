@@ -4,6 +4,7 @@ import AuthLayout from '../layouts/AuthLayout';
 import { solicitudApi } from '../api/solicitudApi';
 import { useAuth } from '../hooks/useAuth';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { animalApi } from '../api/animalApi';
 
 const ESTADO_CONFIG = {
   Pendiente: {
@@ -26,6 +27,12 @@ const ESTADO_CONFIG = {
     color: 'bg-gray-100 text-gray-600 border-gray-200',
     icon: '✖',
   },
+
+  Activa: {
+    label: 'Activa',
+    color: 'bg-green-100 text-green-800 border-green-200',
+    icon: '🟢',
+  },
 };
 
 function EstadoBadge({ estado }) {
@@ -43,37 +50,27 @@ function EstadoBadge({ estado }) {
 }
 
 function SolicitudCard({ solicitud }) {
+  const FALLBACK = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70';
+  const foto = solicitud.fotoAnimal?.[0] || FALLBACK;
+
   return (
     <article className="bg-white rounded-2xl shadow-sm border border-adogta-border p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-md transition-shadow">
-      {/* Ícono animal */}
-      <div className="w-12 h-12 rounded-full bg-adogta-background flex items-center justify-center text-2xl flex-shrink-0">
-        🐾
-      </div>
-
-      {/* Info */}
+      <img
+        src={foto}
+        alt={solicitud.nombreAnimal || 'Animal'}
+        className="w-16 h-16 rounded-full object-cover flex-shrink-0 border border-adogta-border"
+        onError={(e) => { e.currentTarget.src = FALLBACK; }}
+      />
       <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-2 mb-1">
-          <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-            Publicación #{solicitud.idPublicacion}
-          </span>
-          <span className="text-xs text-gray-300">·</span>
-          <span className="text-xs text-gray-400">
-            Animal #{solicitud.idAnimal}
-          </span>
-        </div>
-        <p className="text-adogta-primary text-sm font-medium">
-          Solicitud #{solicitud.idSolicitud}
+        <p className="text-adogta-primary font-bold text-base">
+          {solicitud.nombreAnimal || `Animal #${solicitud.idAnimal}`}
         </p>
         <p className="text-gray-400 text-xs mt-0.5">
-          Enviada el {new Date(solicitud.fecha).toLocaleDateString('es-MX', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
+          Publicacion #{solicitud.idPublicacion} · Enviada el {new Date(solicitud.fecha).toLocaleDateString('es-MX', {
+            year: 'numeric', month: 'long', day: 'numeric',
           })}
         </p>
       </div>
-
-      {/* Estado */}
       <div className="flex-shrink-0">
         <EstadoBadge estado={solicitud.estado} />
       </div>
@@ -87,6 +84,27 @@ const MisSolicitudesPage = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [misPublicaciones, setMisPublicaciones] = useState([]);
+  const [cargandoPublicaciones, setCargandoPublicaciones] = useState(true);
+  const [errorPublicaciones, setErrorPublicaciones] = useState('');
+
+
+  useEffect(() => {
+    let cancelado = false;
+    animalApi.obtenerMisPublicaciones()
+      .then((data) => {
+        if (cancelado) return;
+        setMisPublicaciones(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (cancelado) return;
+        setErrorPublicaciones(err.response?.data?.error || 'No se pudieron cargar tus publicaciones.');
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoPublicaciones(false);
+      });
+    return () => { cancelado = true; };
+  }, []);
 
   useEffect(() => {
     let cancelado = false;
@@ -209,6 +227,60 @@ const MisSolicitudesPage = () => {
               {resueltas.map(s => <SolicitudCard key={s.idSolicitud} solicitud={s} />)}
             </div>
           </section>
+        )}
+
+        {/* Separador */}
+        <div className="flex items-center justify-center">
+          <span className="block w-12 h-1 bg-adogta-secondary rounded-full" />
+        </div>
+
+        {/* Encabezado mis publicaciones */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="text-5xl mb-3">🐕</div>
+          <h1 className="text-adogta-primary text-2xl font-bold mb-2">Mis publicaciones</h1>
+          <p className="text-adogta-primary text-sm opacity-80">Animales que has puesto en adopción.</p>
+        </div>
+
+        {cargandoPublicaciones && (
+          <p className="text-center text-adogta-primary">Cargando publicaciones...</p>
+        )}
+
+        {!cargandoPublicaciones && errorPublicaciones && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm text-center">
+            {errorPublicaciones}
+          </div>
+        )}
+
+        {!cargandoPublicaciones && !errorPublicaciones && misPublicaciones.length === 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-adogta-border p-8 text-center">
+            <p className="text-adogta-primary font-semibold">Aún no has publicado ninguna mascota</p>
+            <button
+              onClick={() => navigate('/publicar')}
+              className="mt-4 bg-adogta-secondary text-white font-semibold px-6 py-2 rounded-full text-sm hover:bg-orange-500 transition-colors"
+              >
+              Publicar mascota
+            </button>
+          </div>
+        )}
+
+        {!cargandoPublicaciones && !errorPublicaciones && misPublicaciones.length > 0 && (
+        <div className="space-y-3">
+          {misPublicaciones.map(p => (
+          <article key={`${p.idAnimal}-${p.idPublicacion}`} className="bg-white rounded-2xl shadow-sm border border-adogta-border p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-md transition-shadow">
+          <img
+            src={p.fotos?.[0] || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70'}
+            alt={p.nombre}
+            className="w-16 h-16 rounded-full object-cover flex-shrink-0 border border-adogta-border"
+            onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70'; }}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-adogta-primary font-bold text-base">{p.nombre}</p>
+            <p className="text-gray-400 text-xs mt-0.5">{p.tipo} · {p.razaNombre}</p>
+          </div>
+          <EstadoBadge estado={p.estadoPublicacion || 'Activa'} />
+              </article>
+            ))}
+          </div>
         )}
 
       </div>

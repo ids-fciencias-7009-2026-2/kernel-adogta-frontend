@@ -75,4 +75,15 @@ export const animalApi = {
     return response.data;
   },
 
+  /**
+   * GET /api/animales/mis-publicaciones - obtener todas mis publicaicones de animales
+   * y su estado.
+   * @returns {Promise<Object>} { datos relacionados con el animal publicado }
+   * 
+   */
+  obtenerMisPublicaciones: async () => {
+    const response = await apiClient.get('/api/animales/mis-publicaciones');
+    return response.data 
+  },
+
 };
