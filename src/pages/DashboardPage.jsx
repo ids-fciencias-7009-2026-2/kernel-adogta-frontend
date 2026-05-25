@@ -95,12 +95,7 @@ const DashboardPage = () => {
       onClick: () => navigate('/profile'),
       variant: 'primary'
     },
-    /* Temporal en lo que se completa el bloque A es para prueba. */
-    {
-      label: 'Mis solicitudes',
-      onClick: () => navigate('/mis-solicitudes'),
-      variant: 'secondary'
-    },
+    
     {
       label: 'Términos y Condiciones',
       onClick: () => setShowTermsModal(true),

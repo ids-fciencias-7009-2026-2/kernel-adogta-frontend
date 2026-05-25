@@ -9,6 +9,10 @@ import perfilBackground from '../assets/Adogta_dashboard.png';
 import Campo from '../components/common/Campo';
 import QuestionnaireModal from '../modals/QuestionnaireModal';
 import { preguntasCuestionario } from '../utils/questionnaire';
+import { EstadoBadge, SolicitudCard, PublicacionCard, ESTADO_CONFIG } from '../pages/MisSolicitudesPage';
+import { animalApi } from '../api/animalApi';
+import { solicitudApi } from '../api/solicitudApi';
+
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -23,6 +27,32 @@ const ProfilePage = () => {
   const [puedeActualizar, setPuedeActualizar] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeSection, setActiveSection] = useState('datos');
+
+  const [misPublicaciones, setMisPublicaciones] = useState([]);
+  const [cargandoPublicaciones, setCargandoPublicaciones] = useState(false);
+  const [errorPublicaciones, setErrorPublicaciones] = useState('');
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [cargandoSolicitudes, setCargandoSolicitudes] = useState(false);
+  const [errorSolicitudes, setErrorSolicitudes] = useState('');
+
+  useEffect(() => {
+    if (activeSection !== 'publicaciones') return;
+    let cancelado = false;
+  
+    setCargandoPublicaciones(true);
+    animalApi.obtenerMisPublicaciones()
+      .then(data => { if (!cancelado) setMisPublicaciones(Array.isArray(data) ? data : []); })
+      .catch(err => { if (!cancelado) setErrorPublicaciones(err.response?.data?.error || 'Error al cargar publicaciones.'); })
+      .finally(() => { if (!cancelado) setCargandoPublicaciones(false); });
+  
+    setCargandoSolicitudes(true);
+    solicitudApi.getMisSolicitudes()
+      .then(data => { if (!cancelado) setSolicitudes(Array.isArray(data) ? data : []); })
+      .catch(err => { if (!cancelado) setErrorSolicitudes(err.response?.data?.error || 'Error al cargar solicitudes.'); })
+      .finally(() => { if (!cancelado) setCargandoSolicitudes(false); });
+  
+    return () => { cancelado = true; };
+  }, [activeSection]);
 
   // Carga de datos.
   useEffect(() => {
@@ -210,13 +240,36 @@ const ProfilePage = () => {
       //publicaciones del usuario.
       case 'publicaciones':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <h2 className="text-2xl font-bold text-adogta-primary">Publicaciones</h2>
-            <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-              <p className="text-adogta-primary text-sm">Próximamente</p>
-            </div>
+
+            {/* Mis publicaciones */}
+            <section>
+              <h3 className="text-adogta-primary font-bold text-lg mb-4">🐕 Publicaciones que creé</h3>
+              {cargandoPublicaciones && <p className="text-sm text-adogta-primary">Cargando...</p>}
+              {!cargandoPublicaciones && errorPublicaciones && <p className="text-sm text-red-600">{errorPublicaciones}</p>}
+              {!cargandoPublicaciones && !errorPublicaciones && misPublicaciones.length === 0 && (
+              <p className="text-sm text-gray-400">Aún no has publicado ninguna mascota.</p>
+              )}
+              {!cargandoPublicaciones && misPublicaciones.map(p => (
+              <PublicacionCard key={`${p.idAnimal}-${p.idPublicacion}`} publicacion={p} />
+              ))}
+            </section>
+
+            {/* Mis solicitudes */}
+            <section>
+                <h3 className="text-adogta-primary font-bold text-lg mb-4">📋 Publicaciones en las que tengo interés</h3>
+                {cargandoSolicitudes && <p className="text-sm text-adogta-primary">Cargando...</p>}
+                {!cargandoSolicitudes && errorSolicitudes && <p className="text-sm text-red-600">{errorSolicitudes}</p>}
+                {!cargandoSolicitudes && !errorSolicitudes && solicitudes.length === 0 && (
+                  <p className="text-sm text-gray-400">Aún no has expresado interés en ninguna mascota.</p>
+                )}
+                {!cargandoSolicitudes && solicitudes.map(s => (
+                  <SolicitudCard key={s.idSolicitud} solicitud={s} />
+                ))}
+              </section>
           </div>
-        );
+       );
 
       default:
         return null;

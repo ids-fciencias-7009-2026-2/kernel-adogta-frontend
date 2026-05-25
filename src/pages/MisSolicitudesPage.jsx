@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { animalApi } from '../api/animalApi';
 
-const ESTADO_CONFIG = {
+export const ESTADO_CONFIG = {
   Pendiente: {
     label: 'Pendiente',
     color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -22,7 +22,7 @@ const ESTADO_CONFIG = {
     color: 'bg-green-100 text-green-800 border-green-200',
     icon: '🐾',
   },
-  Rechazado: {
+  Rechazada: {
     label: 'No seleccionado',
     color: 'bg-gray-100 text-gray-600 border-gray-200',
     icon: '✖',
@@ -35,7 +35,7 @@ const ESTADO_CONFIG = {
   },
 };
 
-function EstadoBadge({ estado }) {
+export function EstadoBadge({ estado }) {
   const config = ESTADO_CONFIG[estado] || {
     label: estado,
     color: 'bg-gray-100 text-gray-600 border-gray-200',
@@ -49,7 +49,7 @@ function EstadoBadge({ estado }) {
   );
 }
 
-function SolicitudCard({ solicitud }) {
+export function SolicitudCard({ solicitud }) {
   const FALLBACK = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70';
   const foto = solicitud.fotoAnimal?.[0] || FALLBACK;
 
@@ -78,7 +78,7 @@ function SolicitudCard({ solicitud }) {
   );
 }
 
-function PublicacionCard({ publicacion }) {
+export function PublicacionCard({ publicacion }) {
   const [expanded, setExpanded] = useState(false);
   const [interesados, setInteresados] = useState([]);
   const [cargandoInteresados, setCargandoInteresados] = useState(false);
