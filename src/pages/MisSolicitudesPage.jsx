@@ -78,6 +78,112 @@ function SolicitudCard({ solicitud }) {
   );
 }
 
+function PublicacionCard({ publicacion }) {
+  const [expanded, setExpanded] = useState(false);
+  const [interesados, setInteresados] = useState([]);
+  const [cargandoInteresados, setCargandoInteresados] = useState(false);
+  const [errorInteresados, setErrorInteresados] = useState('');
+  const [iniciando, setIniciando] = useState(null);
+  const [estadoPublicacion, setEstadoPublicacion] = useState(publicacion.estadoPublicacion || 'Activa');
+
+  const FALLBACK = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70';
+
+  const handleVerInteresados = async () => {
+    if (expanded) {
+      setExpanded(false);
+      return;
+    }
+    setExpanded(true);
+    setCargandoInteresados(true);
+    setErrorInteresados('');
+    try {
+      const data = await solicitudApi.getInteresados(publicacion.idPublicacion);
+      setInteresados(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setErrorInteresados('No se pudieron cargar los interesados.');
+    } finally {
+      setCargandoInteresados(false);
+    }
+  };
+
+  const handleIniciarTramite = async (idSolicitud) => {
+    if (!window.confirm('¿Iniciar trámite con este adoptante?')) return;
+    setIniciando(idSolicitud);
+    try {
+      await solicitudApi.iniciarTramite(idSolicitud);
+      setEstadoPublicacion('En proceso');
+      setExpanded(false);
+    } catch (err) {
+      alert(err.response?.data?.error || 'No se pudo iniciar el trámite.');
+    } finally {
+      setIniciando(null);
+    }
+  };
+
+  return (
+    <article className="bg-white rounded-2xl shadow-sm border border-adogta-border overflow-hidden hover:shadow-md transition-shadow">
+      {/* Tarjeta principal */}
+      <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <img
+          src={publicacion.fotos?.[0] || FALLBACK}
+          alt={publicacion.nombre}
+          className="w-16 h-16 rounded-full object-cover flex-shrink-0 border border-adogta-border"
+          onError={(e) => { e.currentTarget.src = FALLBACK; }}
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-adogta-primary font-bold text-base">{publicacion.nombre}</p>
+          <p className="text-gray-400 text-xs mt-0.5">{publicacion.tipo} · {publicacion.razaNombre}</p>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <EstadoBadge estado={estadoPublicacion} />
+          {estadoPublicacion !== 'En proceso' && estadoPublicacion !== 'Adoptado' && estadoPublicacion !== 'Borrada' && (
+            <button
+              onClick={handleVerInteresados}
+              className="bg-adogta-primary text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-adogta-secondary transition-colors"
+            >
+              {expanded ? 'Ocultar' : 'Ver interesados'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Lista de interesados expandible */}
+      {expanded && (
+        <div className="border-t border-adogta-border bg-adogta-background px-5 py-4 space-y-3">
+          {cargandoInteresados && (
+            <p className="text-center text-adogta-primary text-sm">Cargando interesados...</p>
+          )}
+          {errorInteresados && (
+            <p className="text-center text-red-600 text-sm">{errorInteresados}</p>
+          )}
+          {!cargandoInteresados && !errorInteresados && interesados.length === 0 && (
+            <p className="text-center text-gray-400 text-sm">Nadie ha expresado interés aún.</p>
+          )}
+          {!cargandoInteresados && interesados.map(i => (
+            <div key={i.idSolicitud} className="bg-white rounded-xl border border-adogta-border p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-adogta-secondary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {i.nombre?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-adogta-primary font-semibold text-sm">{i.nombre}</p>
+                <p className="text-gray-400 text-xs">{i.email}</p>
+                {i.telefono && <p className="text-gray-400 text-xs">{i.telefono}</p>}
+              </div>
+              <button
+                onClick={() => handleIniciarTramite(i.idSolicitud)}
+                disabled={iniciando === i.idSolicitud}
+                className="bg-adogta-secondary text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-orange-500 transition-colors disabled:opacity-50"
+              >
+                {iniciando === i.idSolicitud ? 'Iniciando...' : 'Iniciar trámite'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
 const MisSolicitudesPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -264,21 +370,9 @@ const MisSolicitudesPage = () => {
         )}
 
         {!cargandoPublicaciones && !errorPublicaciones && misPublicaciones.length > 0 && (
-        <div className="space-y-3">
-          {misPublicaciones.map(p => (
-          <article key={`${p.idAnimal}-${p.idPublicacion}`} className="bg-white rounded-2xl shadow-sm border border-adogta-border p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-md transition-shadow">
-          <img
-            src={p.fotos?.[0] || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70'}
-            alt={p.nombre}
-            className="w-16 h-16 rounded-full object-cover flex-shrink-0 border border-adogta-border"
-            onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70'; }}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-adogta-primary font-bold text-base">{p.nombre}</p>
-            <p className="text-gray-400 text-xs mt-0.5">{p.tipo} · {p.razaNombre}</p>
-          </div>
-          <EstadoBadge estado={p.estadoPublicacion || 'Activa'} />
-              </article>
+          <div className="space-y-3">
+            {misPublicaciones.map(p => (
+            <PublicacionCard key={`${p.idAnimal}-${p.idPublicacion}`} publicacion={p} />
             ))}
           </div>
         )}
