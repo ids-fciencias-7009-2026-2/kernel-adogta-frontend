@@ -14,6 +14,7 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import { useAdminAuth } from './hooks/useAdminAuth';
 import AdminAnimalDetailPage from './pages/AdminAnimalDetailPage';
+import BannedPage from './pages/BannedPage';
 
 function ProtectedRoute({ isAuthenticated, children }) {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -37,6 +38,7 @@ function AppRoutes() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/banned" element={<BannedPage />} />
             
 
             {/* Rutas protegidas */}
