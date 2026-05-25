@@ -90,6 +90,11 @@ const DashboardPage = () => {
       variant: 'primary'
     },
     {
+      label: 'Mapa',
+      onClick: () => navigate('/mapa'),
+      variant: 'secondary'
+    },
+    {
       label: 'Términos y Condiciones',
       onClick: () => setShowTermsModal(true),
       variant: 'secondary'

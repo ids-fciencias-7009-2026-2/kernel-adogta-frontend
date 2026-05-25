@@ -86,4 +86,10 @@ export const animalApi = {
     return response.data;
   },
 
+  // Obtiene publicaciones activas con coordenadas para el mapa
+    listarParaMapa: async () => {
+      const response = await apiClient.get('/api/animales/mapa');
+      return response.data;
+    },
+
 };

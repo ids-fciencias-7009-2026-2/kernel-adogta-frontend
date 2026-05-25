@@ -10,6 +10,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
 import EditarAnimalPage from './pages/EditarAnimalPage';
 import AnimalDetailPage from './pages/AnimalDetailPage';
+import MapaPage from './pages/MapaPage';
 
 function ProtectedRoute({ isAuthenticated, children }) {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -74,6 +75,15 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute isAuthenticated={autenticado}>
                         <AnimalDetailPage />
+                    </ProtectedRoute>
+                }
+            />
+            {/* Ruta Mapa */}
+            <Route
+                path="/mapa"
+                element={
+                    <ProtectedRoute isAuthenticated={autenticado}>
+                        <MapaPage />
                     </ProtectedRoute>
                 }
             />
