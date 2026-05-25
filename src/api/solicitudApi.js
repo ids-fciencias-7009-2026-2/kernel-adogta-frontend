@@ -21,4 +21,38 @@ export const solicitudApi = {
     return response.data;
   },
 
+  verificarInteres: async (idPublicacion) => {
+    const response = await apiClient.get(`/api/solicitudes/verificar/${idPublicacion}`);
+    return response.data.interes_expresado;
+  },
+
+  getMisSolicitudes: async () => {
+    const response = await apiClient.get('/api/solicitudes/mis-solicitudes');
+    return response.data;
+  },
+  /**
+   * GET /api/solicitudes/por-publicacion/{idPublicacion} Obtiene 
+   * toda la lista de personas interesadas con los datos mas relvantes de una
+   * publicacion con su id.
+   * 
+   * @param {number} idPublicacion 
+   * @returns {Promise<Object>} { datos de las peronsas interesadas. }
+   */
+  getInteresados: async (idPublicacion) => {
+    const response = await apiClient.get(`/api/solicitudes/por-publicacion/${idPublicacion}`);
+    return response.data;
+  },
+  
+  /**
+   * GET /api/solicitudes/idSolicitud/iniciar-tramite Inicia el proceso de 
+   * contacto y actualizacion de estados de una solicitud asociada a una 
+   * persona interesada.
+   * 
+   * @param {number} idSolicitud 
+   * @returns {Promise<Object>} { Mensaje de exito o no }
+   */
+  iniciarTramite: async (idSolicitud) => {
+    const response = await apiClient.put(`/api/solicitudes/${idSolicitud}/iniciar-tramite`);
+    return response.data;
+  },
 };

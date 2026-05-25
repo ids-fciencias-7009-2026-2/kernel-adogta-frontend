@@ -86,4 +86,28 @@ export const animalApi = {
     return response.data;
   },
 
+  /**
+   * GET /api/animales/mis-publicaciones - obtener todas mis publicaicones de animales
+   * y su estado.
+   * @returns {Promise<Object>} { datos relacionados con el animal publicado }
+   * 
+   */
+  obtenerMisPublicaciones: async () => {
+    const response = await apiClient.get('/api/animales/mis-publicaciones');
+    return response.data 
+  },
+
+
+  /**
+   * 
+   * GET /api/animales/recomenados - obtener todas las publicaciones que son recomendadas
+   * con la encuesta.
+   * 
+   * @returns {Promise<Object>} { datos de las publicaciones que hacen match con el usuario}
+   */
+  getRecomendados: async () => {
+    const response = await apiClient.get('/api/animales/recomendados');
+    return response.data;
+  },
+
 };
