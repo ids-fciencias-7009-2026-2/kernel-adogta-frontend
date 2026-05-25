@@ -7,6 +7,8 @@ import AnimalGallery from '../components/animals/AnimalGallery';
 import { animalApi } from '../api/animalApi';
 import { solicitudApi } from '../api/solicitudApi';
 import { useAuth } from '../hooks/useAuth';
+import { reporteApi } from '../api/reporteApi';  
+import ReportarModal from '../modals/ReportarModal';
 import {
   TALLA_LABEL,
   fallbackImg,
@@ -87,6 +89,11 @@ export default function AnimalDetailPage() {
   const [listaCompleta, setListaCompleta] = useState([]);
   const [cargandoRelacionados, setCargandoRelacionados] = useState(true);
 
+  const [reportando, setReportando] = useState(false);
+  const [modalReporteAbierto, setModalReporteAbierto] = useState(false);
+  const [yaReportado, setYaReportado] = useState(false);
+  const [reporteSuccess, setReporteSuccess] = useState('');
+
   // Efecto A: fetch del animal por idAnimal.
   useEffect(() => {
     let cancelado = false;
@@ -134,6 +141,17 @@ export default function AnimalDetailPage() {
     return () => { cancelado = true; };
   }, [idAnimal]);
 
+  const esPropia = currentUserId != null && animal != null && Number(currentUserId) === Number(animal.idUsuario);
+
+  // Efecto C: verificar si el usuario ya reportó esta publicación
+  useEffect(() => {
+    if (animal && !esPropia) {
+      reporteApi.existeReporte(animal.idPublicacion)  
+        .then(data => setYaReportado(data.existe))
+        .catch(() => setYaReportado(false));
+    }
+  }, [animal, esPropia]);
+
   const relacionados = useMemo(() => {
     if (!animal || !Array.isArray(listaCompleta)) return [];
     return listaCompleta
@@ -170,6 +188,18 @@ export default function AnimalDetailPage() {
     }
   };
 
+  const handleReportar = (motivo) => {
+    if (!animal) return;
+    setReportando(true);
+    reporteApi.reportarPublicacion(animal.idPublicacion, motivo)  
+      .then(() => {
+        setYaReportado(true);
+        setReporteSuccess('Reporte enviado. Nos encargaremos de revisarlo.');
+      })
+      .catch(err => alert(err.response?.data?.error || 'Error al reportar'))
+      .finally(() => setReportando(false));
+  };
+
   const headerButtons = [
     {
       label: 'Volver al dashboard',
@@ -203,161 +233,185 @@ export default function AnimalDetailPage() {
     );
   }
 
-  const esPropia =
-    currentUserId != null && Number(currentUserId) === Number(animal.idUsuario);
-
   const talla = TALLA_LABEL[animal.razaTalla] || '';
   const edadFmt = formatEdad(animal.edad);
-
   const vacunacionPositiva = animal.estadoVacunacion === 'Completo';
 
   return (
-    <AuthLayout
-      title={animal.nombre || 'Detalle'}
-      backgroundImage={dashboardBackground}
-      buttons={headerButtons}
-    >
-      <div className="w-full max-w-4xl space-y-8">
-        <AnimalGallery fotos={animal.fotos} nombre={animal.nombre} tipo={animal.tipo} />
+    <>
+      <AuthLayout
+        title={animal.nombre || 'Detalle'}
+        backgroundImage={dashboardBackground}
+        buttons={headerButtons}
+      >
+        <div className="w-full max-w-4xl space-y-8">
+          <AnimalGallery fotos={animal.fotos} nombre={animal.nombre} tipo={animal.tipo} />
 
-        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-          <header className="text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-adogta-primary text-left">
-              {animal.nombre}
-            </h1>
-            <p className="mt-2 text-sm text-adogta-primary opacity-80 text-left">
-              {animal.tipo}
-              {animal.razaNombre ? ` · ${animal.razaNombre}` : ''}
-              {talla ? ` · ${talla}` : ''}
-              {edadFmt ? ` · ${edadFmt}` : ''}
-              {animal.codigoPostal ? ` · C.P. ${animal.codigoPostal}` : ''}
-            </p>
-          </header>
-
-          {animal.descripcion && animal.descripcion.trim() !== '' && (
-            <section className="text-left">
-              <h2 className="text-adogta-primary font-semibold mb-2 text-left">
-                Sobre {animal.nombre}
-              </h2>
-              <p className="max-w-prose text-adogta-primary whitespace-pre-line text-left">
-                {animal.descripcion}
+          <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+            <header className="text-left">
+              <h1 className="text-3xl md:text-4xl font-bold text-adogta-primary text-left">
+                {animal.nombre}
+              </h1>
+              <p className="mt-2 text-sm text-adogta-primary opacity-80 text-left">
+                {animal.tipo}
+                {animal.razaNombre ? ` · ${animal.razaNombre}` : ''}
+                {talla ? ` · ${talla}` : ''}
+                {edadFmt ? ` · ${edadFmt}` : ''}
+                {animal.codigoPostal ? ` · C.P. ${animal.codigoPostal}` : ''}
               </p>
+            </header>
+
+            {animal.descripcion && animal.descripcion.trim() !== '' && (
+              <section className="text-left">
+                <h2 className="text-adogta-primary font-semibold mb-2 text-left">
+                  Sobre {animal.nombre}
+                </h2>
+                <p className="max-w-prose text-adogta-primary whitespace-pre-line text-left">
+                  {animal.descripcion}
+                </p>
+              </section>
+            )}
+
+            <section className="flex flex-wrap justify-start gap-2">
+              <Chip tone={vacunacionPositiva ? 'positivo' : 'pendiente'}>
+                Vacunación: {animal.estadoVacunacion}
+              </Chip>
+              <Chip tone={animal.esterilizado ? 'positivo' : 'pendiente'}>
+                {animal.esterilizado ? 'Esterilizado' : 'Sin esterilizar'}
+              </Chip>
+              <Chip tone={animal.entrenado ? 'positivo' : 'pendiente'}>
+                {animal.entrenado ? 'Entrenado' : 'Sin entrenar'}
+              </Chip>
             </section>
-          )}
 
-          <section className="flex flex-wrap justify-start gap-2">
-            <Chip tone={vacunacionPositiva ? 'positivo' : 'pendiente'}>
-              Vacunación: {animal.estadoVacunacion}
-            </Chip>
-            <Chip tone={animal.esterilizado ? 'positivo' : 'pendiente'}>
-              {animal.esterilizado ? 'Esterilizado' : 'Sin esterilizar'}
-            </Chip>
-            <Chip tone={animal.entrenado ? 'positivo' : 'pendiente'}>
-              {animal.entrenado ? 'Entrenado' : 'Sin entrenar'}
-            </Chip>
-          </section>
-
-          <section className="text-left">
-            <h2 className="text-adogta-primary font-semibold mb-3 text-left">Carácter</h2>
-            <div className="divide-y divide-gray-100">
-              <NivelRow icono="⚡" label="Nivel de energía" valor={animal.nivelEnergia} />
-              <NivelRow icono="🧘" label="Independencia" valor={animal.independencia} />
-              <NivelRow icono="👶" label="Sociable con niños" valor={animal.sociableNiños} />
-              <NivelRow icono="🐶" label="Sociable con mascotas" valor={animal.sociableMascotas} />
-            </div>
-          </section>
-
-          {animal.padecimientos && animal.padecimientos.length > 0 && (
             <section className="text-left">
-              <h2 className="text-adogta-primary font-semibold mb-2 text-left">
-                Condiciones de salud
-              </h2>
-              <div className="flex flex-wrap justify-start gap-2">
-                {animal.padecimientos.map((p, i) => (
-                  <Chip key={`${p}-${i}`} tone="pendiente">{p}</Chip>
-                ))}
+              <h2 className="text-adogta-primary font-semibold mb-3 text-left">Carácter</h2>
+              <div className="divide-y divide-gray-100">
+                <NivelRow icono="⚡" label="Nivel de energía" valor={animal.nivelEnergia} />
+                <NivelRow icono="🧘" label="Independencia" valor={animal.independencia} />
+                <NivelRow icono="👶" label="Sociable con niños" valor={animal.sociableNiños} />
+                <NivelRow icono="🐶" label="Sociable con mascotas" valor={animal.sociableMascotas} />
               </div>
             </section>
-          )}
 
-          {!esPropia && (
-            <section className="pt-2 flex flex-col items-center">
-              <div className="w-full max-w-md">
-                {enviada ? (
-                  <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-3 font-semibold">
-                    ¡Solicitud enviada!
-                  </p>
-                ) : (
-                  <Button
-                    onClick={handleInteres}
-                    loading={enviando}
-                    disabled={enviando}
-                    fullWidth
-                  >
-                    Me interesa adoptar
-                  </Button>
-                )}
-                {errorInteres && !enviada && (
-                  <p className="mt-2 text-center text-xs text-red-600">{errorInteres}</p>
-                )}
-              </div>
+            {animal.padecimientos && animal.padecimientos.length > 0 && (
+              <section className="text-left">
+                <h2 className="text-adogta-primary font-semibold mb-2 text-left">
+                  Condiciones de salud
+                </h2>
+                <div className="flex flex-wrap justify-start gap-2">
+                  {animal.padecimientos.map((p, i) => (
+                    <Chip key={`${p}-${i}`} tone="pendiente">{p}</Chip>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {!esPropia && (
+              <section className="pt-2 flex flex-col items-center">
+                <div className="w-full max-w-md">
+                  {enviada ? (
+                    <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-3 font-semibold">
+                      ¡Solicitud enviada!
+                    </p>
+                  ) : (
+                    <Button
+                      onClick={handleInteres}
+                      loading={enviando}
+                      disabled={enviando}
+                      fullWidth
+                    >
+                      Me interesa adoptar
+                    </Button>
+                  )}
+                  {errorInteres && !enviada && (
+                    <p className="mt-2 text-center text-xs text-red-600">{errorInteres}</p>
+                  )}
+
+                  {/* Botón de reportar (si no es propia y aún no reportó) */}
+                  {yaReportado ? (
+                    <p className="mt-3 text-center text-xs text-gray-500">
+                      Ya reportaste esta publicación
+                    </p>
+                  ) : (
+                    <button
+                      onClick={() => setModalReporteAbierto(true)}
+                      className="mt-3 text-xs text-red-600 underline hover:text-red-800"
+                    >
+                      Reportar publicación
+                    </button>
+                  )}
+                </div>
+              </section>
+            )}
+          </div>
+
+          {(cargandoRelacionados || relacionados.length > 0) && (
+            <section aria-label="Más mascotas disponibles" className="text-left">
+              <h2 className="text-2xl md:text-3xl font-bold text-adogta-primary mb-4 text-left">
+                {animal.tipo === 'Perro'
+                  ? 'Más perros disponibles'
+                  : 'Más gatos disponibles'}
+              </h2>
+
+              {cargandoRelacionados ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Array.from({ length: MAX_RELACIONADOS }).map((_, i) => (
+                    <MiniCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {relacionados.map((r) => {
+                    const fb = fallbackImg(r.tipo);
+                    const foto = r.fotos?.[0] || fb;
+                    const irADetalle = () => navigate(`/animales/${r.idAnimal}`);
+                    return (
+                      <article
+                        key={r.idAnimal}
+                        role="button"
+                        tabIndex={0}
+                        onClick={irADetalle}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            irADetalle();
+                          }
+                        }}
+                        className="bg-white rounded-2xl shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow focus:outline-none focus:ring-2 focus:ring-adogta-secondary"
+                      >
+                        <img
+                          src={foto}
+                          alt={r.nombre}
+                          onError={(e) => { e.currentTarget.src = fb; }}
+                          className="w-full aspect-square object-cover"
+                        />
+                        <div className="p-3">
+                          <h3 className="text-adogta-primary font-semibold truncate">
+                            {r.nombre}
+                          </h3>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           )}
         </div>
+      </AuthLayout>
 
-        {(cargandoRelacionados || relacionados.length > 0) && (
-          <section aria-label="Más mascotas disponibles" className="text-left">
-            <h2 className="text-2xl md:text-3xl font-bold text-adogta-primary mb-4 text-left">
-              {animal.tipo === 'Perro'
-                ? 'Más perros disponibles'
-                : 'Más gatos disponibles'}
-            </h2>
-
-            {cargandoRelacionados ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Array.from({ length: MAX_RELACIONADOS }).map((_, i) => (
-                  <MiniCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {relacionados.map((r) => {
-                  const fb = fallbackImg(r.tipo);
-                  const foto = r.fotos?.[0] || fb;
-                  const irADetalle = () => navigate(`/animales/${r.idAnimal}`);
-                  return (
-                    <article
-                      key={r.idAnimal}
-                      role="button"
-                      tabIndex={0}
-                      onClick={irADetalle}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          irADetalle();
-                        }
-                      }}
-                      className="bg-white rounded-2xl shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow focus:outline-none focus:ring-2 focus:ring-adogta-secondary"
-                    >
-                      <img
-                        src={foto}
-                        alt={r.nombre}
-                        onError={(e) => { e.currentTarget.src = fb; }}
-                        className="w-full aspect-square object-cover"
-                      />
-                      <div className="p-3">
-                        <h3 className="text-adogta-primary font-semibold truncate">
-                          {r.nombre}
-                        </h3>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
-      </div>
-    </AuthLayout>
+      {/* Modal de reporte */}
+      <ReportarModal
+        isOpen={modalReporteAbierto}
+        onClose={() => {
+          setModalReporteAbierto(false);
+          setReporteSuccess('');
+        }}
+        onSubmit={handleReportar}
+        loading={reportando}
+        successMessage={reporteSuccess}
+      />
+    </>
   );
 }

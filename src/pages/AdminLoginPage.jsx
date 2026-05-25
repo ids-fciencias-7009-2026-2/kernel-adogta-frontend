@@ -1,28 +1,26 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PublicLayout from '../layouts/PublicLayout';
-import { usuarioApi } from '../api/usuarioApi';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useForm } from '../hooks/useForm';
 import { validateLoginForm } from '../utils/validations';
+import { adminApi } from '../api/adminApi';
 import loginBackground from '../assets/Adogta_login.png';
 import logo from '../assets/Adogta_logo.png';
 
 /**
- * Página de inicio de sesión
- * Permite a usuarios existentes autenticarse
+ * Página de inicio de sesión para administradores.
  */
-const LoginPage = () => {
+const AdminLoginPage = () => {
   const navigate = useNavigate();
 
-  // Limpia los estilos del body
+  // Ajusta los estilos.
   useEffect(() => {
     document.body.style.margin = '0';
     document.body.style.padding = '0';
     document.body.style.minHeight = '100vh';
-    
     return () => {
       document.body.style.margin = '';
       document.body.style.padding = '';
@@ -30,87 +28,61 @@ const LoginPage = () => {
     };
   }, []);
 
-  /**
-   * Envía credenciales al backend
-   */
+  // Envía las credenciales y redirige al panel de administración
   const onSubmit = async (formData) => {
-    const response = await usuarioApi.login({ 
-      email: formData.email, 
-      password: formData.password 
-    });
-    
-    if (response.token) {
-      navigate('/dashboard');
-    }
+    await adminApi.login({ email: formData.email, password: formData.password });
+    navigate('/admin/dashboard');
   };
 
-  /**
-   * Convierte error del API en mensaje legible
-   */
+  // Convierte el error del API en un mensaje legible para el usuario
   const handleApiError = (error) => {
-    if (error.response?.status === 403 && error.response?.data?.motivo) {
-      navigate(`/banned?motivo=${encodeURIComponent(error.response.data.motivo)}`);
-      return 'Redirigiendo...';
-    }
-    if (error.response?.data?.message) return error.response.data.message;
     if (error.response?.data?.error) return error.response.data.error;
+    if (error.response?.data?.message) return error.response.data.message;
     return 'Error al iniciar sesión. Verifica tus credenciales.';
   };
 
-  // Hook que maneja todo el estado del formulario
-  const {
-    formData,
-    errors,
-    loading,
-    serverError,
-    handleChange,
-    handleSubmit,
-  } = useForm(
+  // Hook del estado del formulario, validación y envío
+  const { formData, errors, loading, serverError, handleChange, handleSubmit } = useForm(
     { email: '', password: '' },
     validateLoginForm,
     onSubmit,
     handleApiError
   );
 
-  // Pantalla de carga
-  if (loading) {
-    return <LoadingSpinner message="Iniciando sesión..." />;
-  }
+  // Pantalla de carga.
+  if (loading) return <LoadingSpinner message="Iniciando sesión..." />;
 
   return (
     <PublicLayout backgroundImage={loginBackground}>
-      
-      {/* Tarjeta del formulario */}
       <div className="max-w-[440px] w-full bg-white rounded-2xl p-10 shadow-xl relative z-10 border border-white/20 max-h-[90vh] overflow-auto">
-        
         {/* Logo */}
         <div className="text-center mb-6">
           <img src={logo} alt="Adogta Logo" className="max-w-[180px] h-auto inline-block" />
         </div>
-        
-        {/* Títulos */}
+
+        {/* Títulos de la tarjeta. */}
         <h2 className="text-adogta-primary text-[28px] font-bold text-center tracking-tight mb-1">
-          Bienvenido
+          Administrador
         </h2>
         <p className="text-adogta-primary text-center text-sm opacity-80 mb-7">
-          Inicia sesión en Adogta
+          Inicia sesión con tu cuenta de administrador
         </p>
-        
+
         {/* Error del servidor */}
         {serverError && (
           <div className="bg-[#FEF2F0] text-adogta-secondary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-secondary/30">
             <span>⚠️</span> {serverError}
           </div>
         )}
-        
-        {/* Error de validación */}
+
+        {/* Error de validación del formulario */}
         {Object.keys(errors).length > 0 && !serverError && (
           <div className="bg-[#FEF2F0] text-adogta-secondary px-4 py-3 rounded-xl mb-5 text-[13px] flex items-center gap-2 border border-adogta-secondary/30">
             <span>⚠️</span> Por favor, llena adecuadamente los campos
           </div>
         )}
-        
-        {/* Formulario */}
+
+        {/* Formulario de login */}
         <form onSubmit={handleSubmit}>
           <Input
             label="Correo electrónico"
@@ -118,13 +90,12 @@ const LoginPage = () => {
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="ejemplo@correo.com"
+            placeholder="admin@adogta.com"
             required
             disabled={loading}
             icon="📧"
             error={errors.email}
           />
-          
           <Input
             label="Contraseña"
             name="password"
@@ -137,35 +108,15 @@ const LoginPage = () => {
             icon="🔒"
             error={errors.password}
           />
-          
-          <Button 
-            type="submit" 
-            disabled={loading} 
-            loading={loading} 
-            fullWidth 
-            icon="🐾"
-          >
+          <Button type="submit" disabled={loading} loading={loading} fullWidth icon="🔐">
             Iniciar Sesión
           </Button>
         </form>
-        
-        {/* Enlace a página de registro */}
-        <div className="mt-6 text-center text-adogta-primary text-[13px]">
-          ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-adogta-secondary no-underline font-semibold border-b border-dashed border-adogta-secondary">
-            Regístrate aquí
-          </Link>
-        </div>
-        {/* Enlace a página de recuperación */}
-        <div className="mt-3 text-center">
-          <Link to="/forgot-password" className="text-adogta-primary/70 hover:text-adogta-secondary underline text-xs">
-            ¿Olvidaste tu contraseña?
-          </Link>
-        </div>
 
-        <div className="mt-3 text-center">
-          <Link to="/admin/login" className="text-adogta-primary/70 hover:text-adogta-secondary underline text-xs">
-            ¿Eres administrador?
+        {/* Enlace para dirigir al login normal */}
+        <div className="mt-6 text-center text-adogta-primary text-[13px]">
+          <Link to="/login" className="text-adogta-secondary no-underline font-semibold">
+            Volver al inicio de sesión normal
           </Link>
         </div>
       </div>
@@ -173,4 +124,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default AdminLoginPage;
