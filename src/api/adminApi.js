@@ -1,4 +1,4 @@
-import apiClient from './client';
+import adminClient from './adminClient';
 
 /**
  * API para las operaciones de administrador y reportes.
@@ -6,19 +6,23 @@ import apiClient from './client';
  * Endpoints:
  *  - POST /admin/login
  *  - POST /admin/logout
+ *  - GET  /admin/me
  *  - GET  /api/admin/reportes
  *  - PUT  /api/admin/reportes/{id}/resolver
  *  - POST /api/admin/baneos
- *  - POST /api/reportes (cualquier usuario autenticado)
+ *  - POST /api/reportes
+ *  - GET  /api/reportes/existe
  */
 export const adminApi = {
+
   /**
    * Inicia sesión como administrador.
+   * 
    * @param {Object} credentials - { email, password }
-   * @returns {Promise<Object>} { token }
+   * @returns {Promise<Object>}  - { token }
    */
   login: async (credentials) => {
-    const response = await apiClient.post('/admin/login', credentials);
+    const response = await adminClient.post('/admin/login', credentials);
     if (response.data.token) {
       sessionStorage.setItem('adminToken', response.data.token);
     }
@@ -29,69 +33,75 @@ export const adminApi = {
    * Cierra la sesión del administrador.
    */
   logout: async () => {
-    await apiClient.post('/admin/logout');
+    await adminClient.post('/admin/logout');
     sessionStorage.removeItem('adminToken');
     sessionStorage.removeItem('adminUser');
   },
 
   /**
-   * Obtiene los datos del administrador autenticado.
+   * Obtiene los datos del administrador (loggeado).
+   * 
    * @returns {Promise<Object>}
    */
   getMe: async () => {
-    const response = await apiClient.get('/admin/me');
+    const response = await adminClient.get('/admin/me');
     return response.data;
   },
 
   /**
-   * Lista los reportes para el panel de administración.
+   * Lista los reportes para el panel.
+   * 
    * @returns {Promise<Array>}
    */
   listarReportes: async () => {
-    const response = await apiClient.get('/api/admin/reportes');
+    const response = await adminClient.get('/api/admin/reportes');
     return response.data;
   },
 
   /**
    * Resuelve un reporte.
-   * @param {number} idReporte  - ID del reporte.
-   * @param {string} accion     - "DESESTIMAR" o "BAJA_PUBLICACION".
+   * 
+   * @param {number} idReporte - ID del reporte.
+   * @param {string} accion    - "DESESTIMAR" o "BAJA_PUBLICACION".
    * @returns {Promise<Object>}
    */
   resolverReporte: async (idReporte, accion) => {
-    const response = await apiClient.put(`/api/admin/reportes/${idReporte}/resolver`, { accion });
+    const response = await adminClient.put(`/api/admin/reportes/${idReporte}/resolver`, { accion });
     return response.data;
   },
 
   /**
    * Banea a un usuario.
+   * 
    * @param {number} idUsuario  - ID del usuario a banear.
    * @param {string} motivo     - Motivo del baneo.
    * @returns {Promise<Object>}
    */
   banearUsuario: async (idUsuario, motivo) => {
-    const response = await apiClient.post('/api/admin/baneos', { idUsuario, motivo });
+    const response = await adminClient.post('/api/admin/baneos', { idUsuario, motivo });
     return response.data;
   },
 
   /**
-   * Reporta una publicación
+   * Reporta una publicación (esto lo puede hcaer un usuario)
+   * 
    * @param {number} idPublicacion  - ID de la publicación.
    * @param {string} motivo         - Motivo del reporte.
    * @returns {Promise<Object>}
    */
   reportarPublicacion: async (idPublicacion, motivo) => {
-    const response = await apiClient.post('/api/reportes', { idPublicacion, motivo });
+    const response = await adminClient.post('/api/reportes', { idPublicacion, motivo });
     return response.data;
   },
 
   /**
-   * Consulta si el usuario actual ya reportó una publicación.
-   * @param {number} idPublicacion    -ID de la publicación
-   * @returns {Promise<Object>} booleano indicando si existe.
+   * Verifica si el usuario actual ya reportó una publicación.
+   * 
+   * @param {number} idPublicacion
+   * @returns {Promise<Object>} { existe: boolean }
    */
   existeReporte: async (idPublicacion) => {
-    const response = await apiClient.get(`/api/reportes/existe?publicacionId=${idPublicacion}`);
+    const response = await adminClient.get(`/api/reportes/existe?publicacionId=${idPublicacion}`);
     return response.data;
   }
 };
