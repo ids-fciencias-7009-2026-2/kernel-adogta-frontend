@@ -7,7 +7,7 @@ import AnimalGallery from '../components/animals/AnimalGallery';
 import { animalApi } from '../api/animalApi';
 import { solicitudApi } from '../api/solicitudApi';
 import { useAuth } from '../hooks/useAuth';
-import { adminApi } from '../api/adminApi';
+import { reporteApi } from '../api/reporteApi';  
 import ReportarModal from '../modals/ReportarModal';
 import {
   TALLA_LABEL,
@@ -141,13 +141,12 @@ export default function AnimalDetailPage() {
     return () => { cancelado = true; };
   }, [idAnimal]);
 
-  // Calculamos esPropia aquí para que el Efecto C pueda usarlo
   const esPropia = currentUserId != null && animal != null && Number(currentUserId) === Number(animal.idUsuario);
 
   // Efecto C: verificar si el usuario ya reportó esta publicación
   useEffect(() => {
     if (animal && !esPropia) {
-      adminApi.existeReporte(animal.idPublicacion)
+      reporteApi.existeReporte(animal.idPublicacion)  
         .then(data => setYaReportado(data.existe))
         .catch(() => setYaReportado(false));
     }
@@ -192,7 +191,7 @@ export default function AnimalDetailPage() {
   const handleReportar = (motivo) => {
     if (!animal) return;
     setReportando(true);
-    adminApi.reportarPublicacion(animal.idPublicacion, motivo)
+    reporteApi.reportarPublicacion(animal.idPublicacion, motivo)  
       .then(() => {
         setYaReportado(true);
         setReporteSuccess('Reporte enviado. Nos encargaremos de revisarlo.');
@@ -407,7 +406,7 @@ export default function AnimalDetailPage() {
         isOpen={modalReporteAbierto}
         onClose={() => {
           setModalReporteAbierto(false);
-          setReporteSuccess(''); 
+          setReporteSuccess('');
         }}
         onSubmit={handleReportar}
         loading={reportando}

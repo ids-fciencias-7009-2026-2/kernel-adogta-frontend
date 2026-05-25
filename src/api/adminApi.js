@@ -82,26 +82,4 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Reporta una publicación (esto lo puede hcaer un usuario)
-   * 
-   * @param {number} idPublicacion  - ID de la publicación.
-   * @param {string} motivo         - Motivo del reporte.
-   * @returns {Promise<Object>}
-   */
-  reportarPublicacion: async (idPublicacion, motivo) => {
-    const response = await adminClient.post('/api/reportes', { idPublicacion, motivo });
-    return response.data;
-  },
-
-  /**
-   * Verifica si el usuario actual ya reportó una publicación.
-   * 
-   * @param {number} idPublicacion
-   * @returns {Promise<Object>} { existe: boolean }
-   */
-  existeReporte: async (idPublicacion) => {
-    const response = await adminClient.get(`/api/reportes/existe?publicacionId=${idPublicacion}`);
-    return response.data;
-  }
 };
