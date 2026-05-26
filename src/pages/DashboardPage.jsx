@@ -112,12 +112,6 @@ const DashboardPage = () => {
     },
     
     {
-      label: 'Mi Perfil',
-      onClick: () => navigate('/profile'),
-      variant: 'primary'
-    },
-    
-    {
       label: 'Términos y Condiciones',
       onClick: () => setShowTermsModal(true),
       variant: 'secondary'
