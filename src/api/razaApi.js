@@ -37,10 +37,26 @@ export const razaApi = {
      * @param {string} payload.nombre
      * @param {string} payload.tipo - "perro" | "gato"
      * @returns {Promise<Object>} Raza creada o existente.
+     * @throws {Error} Si el microservicio falla o la raza no existe.
      */
     add: async (payload) => {
-      const response = await apiClient.post('/api/razas', payload);
-      return response.data;
+      try {
+        const response = await apiClient.post('/api/razas', payload);
+
+        if (response.data?.mensaje) {
+          const error = new Error(response.data.mensaje);
+          error.response = { data: response.data };
+          throw error;
+        }
+        
+        return response.data;
+      } catch (error) {
+        
+        if (error.response?.data?.mensaje) {
+          error.message = error.response.data.mensaje;
+        }
+        throw error;
+      }
     },
 
 };

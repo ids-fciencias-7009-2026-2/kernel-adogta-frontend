@@ -118,6 +118,7 @@ export default function PublicarAnimalPage() {
       setNuevaRaza("");
     } catch (err) {
       const msg =
+        err.message ||
         err.response?.data?.mensaje ||
         err.response?.data?.error ||
         "La raza que buscas no existe";
