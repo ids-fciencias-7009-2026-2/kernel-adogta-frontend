@@ -9,7 +9,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
 import EditarAnimalPage from './pages/EditarAnimalPage';
-import MisSolicitudesPage from './pages/MisSolicitudesPage';
 import AnimalDetailPage from './pages/AnimalDetailPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -115,16 +114,6 @@ function AppRoutes() {
             }
             />
             
-
-            {/* Ruta para checar las solicitudes de adopcion */ }
-            <Route
-                path="/mis-solicitudes"
-                element={
-                    <ProtectedRoute isAuthenticated={autenticado}>
-                        <MisSolicitudesPage />
-                    </ProtectedRoute>
-                }
-            />
 
             {/* Ruta raíz */}
             <Route
