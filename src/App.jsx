@@ -9,11 +9,21 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
 import EditarAnimalPage from './pages/EditarAnimalPage';
-import MisSolicitudesPage from './pages/MisSolicitudesPage';
 import AnimalDetailPage from './pages/AnimalDetailPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import { useAdminAuth } from './hooks/useAdminAuth';
+import AdminAnimalDetailPage from './pages/AdminAnimalDetailPage';
+import BannedPage from './pages/BannedPage';
 
 function ProtectedRoute({ isAuthenticated, children }) {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
+}
+
+function ProtectedAdminRoute({ children }) {
+    const token = sessionStorage.getItem('adminToken');
+    if (!token) return <Navigate to="/admin/login" replace />;
+    return children;
 }
 
 function AppRoutes() {
@@ -27,6 +37,9 @@ function AppRoutes() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/banned" element={<BannedPage />} />
+            
 
             {/* Rutas protegidas */}
             <Route
@@ -37,6 +50,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            {/* Dashboar: para ver todas las publicaciones activas. */}
             <Route
                 path="/dashboard"
                 element={
@@ -45,6 +59,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            {/* Perfil del usuario. */}
             <Route
                 path="/profile"
                 element={
@@ -53,6 +68,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            {/* Cuestionario de estilo de vida. */}
             <Route
                 path="/cuestionario"
                 element={
@@ -61,7 +77,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
-            {/* NUEVA RUTA (de feature/edicion-publicaciones) */}
+            {/* edicion de publicaciones */}
             <Route
                 path="/editar-animal/:idAnimal"
                 element={
@@ -70,6 +86,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            {/* Detalles de un animal. */}
             <Route
                 path="/animales/:idAnimal"
                 element={
@@ -78,16 +95,25 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
-
-            {/* Ruta para checar las solicitudes de adopcion */ }
+            {/* Panel de administracion. */}
             <Route
-                path="/mis-solicitudes"
-                element={
-                    <ProtectedRoute isAuthenticated={autenticado}>
-                        <MisSolicitudesPage />
-                    </ProtectedRoute>
-                }
+            path="/admin/dashboard"
+            element={
+                <ProtectedAdminRoute>
+                <AdminDashboardPage />
+                </ProtectedAdminRoute>
+            }
             />
+
+            <Route
+            path="/admin/animales/:idAnimal"
+            element={
+                <ProtectedAdminRoute>
+                <AdminAnimalDetailPage />
+                </ProtectedAdminRoute>
+            }
+            />
+            
 
             {/* Ruta raíz */}
             <Route
@@ -98,6 +124,7 @@ function AppRoutes() {
                         : <Navigate to="/login" replace />
                 }
             />
+            
 
             {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />
