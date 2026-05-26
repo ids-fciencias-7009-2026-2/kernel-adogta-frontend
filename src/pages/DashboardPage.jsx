@@ -89,10 +89,6 @@ const DashboardPage = () => {
       onClick: () => navigate('/publicar'),
       variant: 'primary'
     },
-<<<<<<< HEAD
-    
-=======
->>>>>>> main
     {
       label: 'Términos y Condiciones',
       onClick: () => setShowTermsModal(true),
