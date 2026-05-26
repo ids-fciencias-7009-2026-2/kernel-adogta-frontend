@@ -201,11 +201,7 @@ export default function AnimalDetailPage() {
   };
 
   const headerButtons = [
-    {
-      label: 'Volver al dashboard',
-      onClick: () => navigate('/dashboard'),
-      variant: 'secondary',
-    },
+    { label: '<- Volver', onClick: () => navigate(-1), variant: 'secondary' }
   ];
 
   if (cargando) {

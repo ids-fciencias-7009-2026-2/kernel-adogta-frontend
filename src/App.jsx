@@ -10,6 +10,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import PublicarAnimalPage from "./pages/PublicarAnimalPage";
 import EditarAnimalPage from './pages/EditarAnimalPage';
 import AnimalDetailPage from './pages/AnimalDetailPage';
+import MapaPage from './pages/MapaPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import { useAdminAuth } from './hooks/useAdminAuth';
@@ -95,12 +96,21 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            {/* Ruta Mapa */}
+            <Route
+                path="/mapa"
+                element={
+                    <ProtectedRoute isAuthenticated={autenticado}>
+                        <MapaPage />
+                    </ProtectedRoute>
+                }
+            />
             {/* Panel de administracion. */}
             <Route
             path="/admin/dashboard"
             element={
                 <ProtectedAdminRoute>
-                <AdminDashboardPage />
+                    <AdminDashboardPage />
                 </ProtectedAdminRoute>
             }
             />
@@ -112,8 +122,7 @@ function AppRoutes() {
                 <AdminAnimalDetailPage />
                 </ProtectedAdminRoute>
             }
-            />
-            
+            />            
 
             {/* Ruta raíz */}
             <Route
