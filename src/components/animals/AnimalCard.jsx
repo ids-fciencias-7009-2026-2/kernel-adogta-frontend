@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { solicitudApi } from '../../api/solicitudApi';
 import Button from '../common/Button';
@@ -34,6 +34,22 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
   const [enviando, setEnviando] = useState(false);
   const [enviada, setEnviada] = useState(false);
   const [errorInteres, setErrorInteres] = useState('');
+  const [verificado, setVerificado] = useState(false);
+
+  useEffect (() => {
+    if (esPropia){
+      setVerificado(false);
+      return;
+    }
+    setVerificado(true);
+    solicitudApi.verificarInteres(animal.idPublicacion)
+    .then((interesExpresado) => setEnviada(interesExpresado))
+    .catch(() => {})
+    .finally(() => setVerificado(false))
+    return () => {
+
+    };
+  }, [animal.idPublicacion, esPropia]);
 
   const irADetalle = () => navigate(`/animales/${animal.idAnimal}`);
 
@@ -149,9 +165,11 @@ export default function AnimalCard({ animal, currentUserId, onEliminar, eliminan
                 {eliminando === animal.idPublicacion ? 'Eliminando...' : 'Eliminar'}
               </button>
             </div>
+          ) : verificado ? (
+            <p className="text-center text-sm text-gray-400 py-2">Verificando...</p>
           ) : enviada ? (
             <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-full py-2 font-semibold">
-              ¡Solicitud enviada!
+              Ya expresaste interés
             </p>
           ) : (
             <Button
