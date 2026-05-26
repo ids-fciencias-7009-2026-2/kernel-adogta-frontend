@@ -19,8 +19,12 @@ const DashboardPage = () => {
   const [errorAnimales, setErrorAnimales] = useState('');
   const [filtroTipo, setFiltroTipo] = useState(null);
   const [pendienteFormulario, setPendienteFormulario] = useState(false);
+  const [recomendados, setRecomendados] = useState([]);
+  const [cargandoRecomendados, setCargandoRecomendados] = useState(false);
 
   const [eliminando, setEliminando] = useState(null);
+ 
+
 
   const handleEliminar = async (idPublicacion) => {
     if (!window.confirm('¿Estás seguro de eliminar esta publicación?')) return;
@@ -61,6 +65,25 @@ const DashboardPage = () => {
       .then((pendiente) => setPendienteFormulario(pendiente))
       .catch(() => setPendienteFormulario(false));
   }, []);
+
+  useEffect(() => {
+    if (!user?.envioFormulario) return;
+    let cancelado = false;
+    setCargandoRecomendados(true);
+    animalApi.getRecomendados()
+      .then((data) => {
+        if (cancelado) return;
+        setRecomendados(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (cancelado) return;
+        setRecomendados([]);
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoRecomendados(false);
+      });
+    return () => { cancelado = true; };
+  }, [user]);
 
   const conteos = useMemo(() => {
     const c = { Perro: 0, Gato: 0 };
@@ -168,6 +191,46 @@ const DashboardPage = () => {
               />
             </div>
           </section>
+
+          {/* Recomendados para ti */}
+          {user?.envioFormulario && (
+            <section>
+              <div className="flex items-center justify-center mb-6">
+                <span className="block w-12 h-1 bg-adogta-secondary rounded-full" />
+              </div>
+              <h2 className="text-center text-adogta-primary text-2xl font-bold mb-2">
+                Recomendados para ti
+              </h2>
+              <p className="text-center text-adogta-primary text-sm opacity-70 mb-8">
+                Basado en tu cuestionario y ubicación
+              </p>
+ 
+              {cargandoRecomendados && (
+                <p className="text-center text-adogta-primary">Calculando compatibilidad...</p>
+              )}
+ 
+              {!cargandoRecomendados && recomendados.length === 0 && (
+                <p className="text-center text-adogta-primary opacity-70">
+                  No encontramos mascotas compatibles cerca de ti por ahora.
+                </p>
+              )}
+ 
+              {!cargandoRecomendados && recomendados.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {recomendados.map((a) => (
+                    <AnimalCard
+                      key={`rec-${a.idUsuario}-${a.idPublicacion}-${a.idAnimal}`}
+                      animal={a}
+                      currentUserId={user?.id}
+                      onEliminar={handleEliminar}
+                      eliminando={eliminando}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
 
           {/* Últimas mascotas adoptables */}
           <section>

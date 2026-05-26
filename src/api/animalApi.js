@@ -86,10 +86,35 @@ export const animalApi = {
     return response.data;
   },
 
-  // Obtiene publicaciones activas con coordenadas para el mapa
+
+  /**
+   * GET /api/animales/mapa — obtiene publicaciones activas con coordenadas para el mapa.
+   * Endpoint público (no requiere autenticación).
+   *
+   * @returns {Promise<Array>} Lista de AnimalMapaResponse con lat/lng.
+   */
     listarParaMapa: async () => {
       const response = await apiClient.get('/api/animales/mapa');
       return response.data;
     },
 
+  /**
+   * GET /api/animales/mis-publicaciones - obtener todas mis publicaciones de animales
+   * y su estado.
+   * @returns {Promise<Object>} { datos relacionados con el animal publicado }
+   */
+  obtenerMisPublicaciones: async () => {
+    const response = await apiClient.get('/api/animales/mis-publicaciones');
+    return response.data;
+  },
+ 
+  /**
+   * GET /api/animales/recomendados - obtener todas las publicaciones recomendadas
+   * con la encuesta.
+   * @returns {Promise<Object>} { datos de las publicaciones que hacen match con el usuario }
+   */
+  getRecomendados: async () => {
+    const response = await apiClient.get('/api/animales/recomendados');
+    return response.data;
+  },
 };
