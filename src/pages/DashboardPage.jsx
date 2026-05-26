@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { animalApi } from '../api/animalApi';
 import { formularioApi } from '../api/formularioApi';
 import AnimalCard from '../components/animals/AnimalCard';
+import MapaDashboardSection from '../components/mapa/MapaDashboardSection';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import dashboardBackground from '../assets/Adogta_dashboard.png';
 
@@ -90,11 +91,6 @@ const DashboardPage = () => {
       variant: 'primary'
     },
     {
-      label: 'Mapa',
-      onClick: () => navigate('/mapa'),
-      variant: 'secondary'
-    },
-    {
       label: 'Términos y Condiciones',
       onClick: () => setShowTermsModal(true),
       variant: 'secondary'
@@ -126,6 +122,17 @@ const DashboardPage = () => {
               con el bienestar animal.
             </p>
           </div>
+
+          {/* Mapa de mascotas cercanas */}
+          <section>
+            <div className="flex items-center justify-center mb-6">
+              <span className="block w-12 h-1 bg-adogta-secondary rounded-full" />
+            </div>
+            <h2 className="text-center text-adogta-primary text-2xl font-bold mb-8">
+              🗺️ Mascotas cerca de ti
+            </h2>
+            <MapaDashboardSection usuario={user} />
+          </section>
 
           {/* Categorías */}
           <section>
