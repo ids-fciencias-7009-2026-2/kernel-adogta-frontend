@@ -48,7 +48,9 @@ const DashboardPage = () => {
       .catch((err) => {
         if (cancelado) return;
         setErrorAnimales(
-          err.response?.data?.error || err.message || 'No se pudieron cargar las publicaciones.'
+          err.response?.data?.error || 
+          err.message || 
+          'No se pudieron cargar las publicaciones.'
         );
       })
       .finally(() => {
@@ -171,7 +173,9 @@ const DashboardPage = () => {
                 imgSrc="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70"
                 bgClass="bg-adogta-secondary"
                 active={filtroTipo === 'Perro'}
-                onClick={() => setFiltroTipo(filtroTipo === 'Perro' ? null : 'Perro')}
+                onClick={() => 
+                  setFiltroTipo(filtroTipo === 'Perro' ? null : 'Perro')
+                }
               />
               <CategoryCard
                 tipo="Gato"
@@ -180,7 +184,9 @@ const DashboardPage = () => {
                 imgSrc="https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=600&q=70"
                 bgClass="bg-adogta-border"
                 active={filtroTipo === 'Gato'}
-                onClick={() => setFiltroTipo(filtroTipo === 'Gato' ? null : 'Gato')}
+                onClick={() => 
+                  setFiltroTipo(filtroTipo === 'Gato' ? null : 'Gato')
+                }
               />
             </div>
           </section>
@@ -246,7 +252,9 @@ const DashboardPage = () => {
             </h2>
 
             {cargandoAnimales && (
-              <p className="text-center text-adogta-primary">Cargando publicaciones...</p>
+              <p className="text-center text-adogta-primary">
+                Cargando publicaciones...
+              </p>
             )}
 
             {!cargandoAnimales && errorAnimales && (
