@@ -8,11 +8,12 @@ import { formularioApi } from '../api/formularioApi';
 import AnimalCard from '../components/animals/AnimalCard';
 import MapaDashboardSection from '../components/mapa/MapaDashboardSection';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import QuestionnaireModal from '../modals/QuestionnaireModal';
 import dashboardBackground from '../assets/Adogta_dashboard.png';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, loadUser } = useAuth();
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [animales, setAnimales] = useState([]);
   const [cargandoAnimales, setCargandoAnimales] = useState(true);
@@ -21,10 +22,8 @@ const DashboardPage = () => {
   const [pendienteFormulario, setPendienteFormulario] = useState(false);
   const [recomendados, setRecomendados] = useState([]);
   const [cargandoRecomendados, setCargandoRecomendados] = useState(false);
-
   const [eliminando, setEliminando] = useState(null);
- 
-
+  const [showCuestionario, setShowCuestionario] = useState(false);
 
   const handleEliminar = async (idPublicacion) => {
     if (!window.confirm('¿Estás seguro de eliminar esta publicación?')) return;
@@ -49,9 +48,7 @@ const DashboardPage = () => {
       .catch((err) => {
         if (cancelado) return;
         setErrorAnimales(
-          err.response?.data?.error ||
-          err.message ||
-          'No se pudieron cargar las publicaciones.'
+          err.response?.data?.error || err.message || 'No se pudieron cargar las publicaciones.'
         );
       })
       .finally(() => {
@@ -174,9 +171,7 @@ const DashboardPage = () => {
                 imgSrc="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=70"
                 bgClass="bg-adogta-secondary"
                 active={filtroTipo === 'Perro'}
-                onClick={() =>
-                  setFiltroTipo(filtroTipo === 'Perro' ? null : 'Perro')
-                }
+                onClick={() => setFiltroTipo(filtroTipo === 'Perro' ? null : 'Perro')}
               />
               <CategoryCard
                 tipo="Gato"
@@ -185,54 +180,61 @@ const DashboardPage = () => {
                 imgSrc="https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=600&q=70"
                 bgClass="bg-adogta-border"
                 active={filtroTipo === 'Gato'}
-                onClick={() =>
-                  setFiltroTipo(filtroTipo === 'Gato' ? null : 'Gato')
-                }
+                onClick={() => setFiltroTipo(filtroTipo === 'Gato' ? null : 'Gato')}
               />
             </div>
           </section>
 
           {/* Recomendados para ti */}
-          {user?.envioFormulario && (
-            <section>
-              <div className="flex items-center justify-center mb-6">
-                <span className="block w-12 h-1 bg-adogta-secondary rounded-full" />
-              </div>
-              <h2 className="text-center text-adogta-primary text-2xl font-bold mb-2">
-                Recomendados para ti
-              </h2>
-              <p className="text-center text-adogta-primary text-sm opacity-70 mb-8">
-                Basado en tu cuestionario y ubicación
-              </p>
- 
-              {cargandoRecomendados && (
-                <p className="text-center text-adogta-primary">Calculando compatibilidad...</p>
-              )}
- 
-              {!cargandoRecomendados && recomendados.length === 0 && (
-                <p className="text-center text-adogta-primary opacity-70">
-                  No encontramos mascotas compatibles cerca de ti por ahora.
+          <section>
+            <div className="flex items-center justify-center mb-6">
+              <span className="block w-12 h-1 bg-adogta-secondary rounded-full" />
+            </div>
+            <h2 className="text-center text-adogta-primary text-2xl font-bold mb-2">
+              Recomendados para ti
+            </h2>
+            <p className="text-center text-adogta-primary text-sm opacity-70 mb-8">
+              {user?.envioFormulario
+                ? 'Basado en tu cuestionario y ubicación'
+                : 'No encontramos mascotas compatibles.'}
+            </p>
+
+            {/* No cuestionario, mensaje y boton del modal. */}
+            {!user?.envioFormulario ? (
+              <div className="bg-white rounded-2xl shadow-sm p-6 text-center">
+                <p className="text-adogta-primary text-sm mb-4">
+                  Responde el cuestionario de adopción para que podamos sugerirte
+                  las mascotas más compatibles contigo.
                 </p>
-              )}
- 
-              {!cargandoRecomendados && recomendados.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {recomendados.map((a) => (
-                    <AnimalCard
-                      key={`rec-${a.idUsuario}-${a.idPublicacion}-${a.idAnimal}`}
-                      animal={a}
-                      currentUserId={user?.id}
-                      onEliminar={handleEliminar}
-                      eliminando={eliminando}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
+                <button
+                  onClick={() => setShowCuestionario(true)}
+                  className="bg-adogta-secondary text-white rounded-full px-6 py-2 text-sm font-semibold hover:bg-orange-600 transition-colors"
+                >
+                  Completar cuestionario
+                </button>
+              </div>
+            ) : cargandoRecomendados ? (
+              <p className="text-center text-adogta-primary">Calculando compatibilidad...</p>
+            ) : recomendados.length === 0 ? (
+              <p className="text-center text-adogta-primary opacity-70">
+                No encontramos mascotas compatibles cerca de ti por ahora.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recomendados.map((a) => (
+                  <AnimalCard
+                    key={`rec-${a.idUsuario}-${a.idPublicacion}-${a.idAnimal}`}
+                    animal={a}
+                    currentUserId={user?.id}
+                    onEliminar={handleEliminar}
+                    eliminando={eliminando}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
 
-
-          {/* Últimas mascotas adoptables */}
+          {/* Últimas mascotas adoptables  */}
           <section>
             <div className="flex items-center justify-center mb-6">
               <span className="block w-12 h-1 bg-adogta-secondary rounded-full" />
@@ -244,9 +246,7 @@ const DashboardPage = () => {
             </h2>
 
             {cargandoAnimales && (
-              <p className="text-center text-adogta-primary">
-                Cargando publicaciones...
-              </p>
+              <p className="text-center text-adogta-primary">Cargando publicaciones...</p>
             )}
 
             {!cargandoAnimales && errorAnimales && (
@@ -279,6 +279,16 @@ const DashboardPage = () => {
       </AuthLayout>
 
       <Terms isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
+
+      {/* Modal del cuestionario */}
+      <QuestionnaireModal
+        isOpen={showCuestionario}
+        onClose={() => setShowCuestionario(false)}
+        onSuccess={() => {
+          loadUser();
+          setShowCuestionario(false);
+        }}
+      />
     </>
   );
 };
