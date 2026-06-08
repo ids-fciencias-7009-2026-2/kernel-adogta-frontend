@@ -170,7 +170,8 @@ export default function PublicarAnimalPage() {
     setAgregandoRaza(true);
     try {
       const tipo = tipoSeleccionado === "Perro" ? "perro" : "gato";
-      const respuesta = await razaApi.add({ nombre: razaInglesSeleccionada, tipo });
+      console.log({ nombreEs: nuevaRaza, nombreEn: razaInglesSeleccionada, tipo });
+      const respuesta = await razaApi.add({ nombreEs: nuevaRaza, nombreEn: razaInglesSeleccionada, tipo });
       await recargarRazas();
       setExitoAgregarRaza(`Raza añadida: ${respuesta.nombre}`);
       setNuevaRaza("");
