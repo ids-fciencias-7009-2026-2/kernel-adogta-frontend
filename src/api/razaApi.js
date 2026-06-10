@@ -30,6 +30,28 @@ export const razaApi = {
     return response.data;
   },
 
+  /**
+   * Consulta sugerencias de razas mientras el usuario escribe.
+   *
+   * @param {string} nombreEntrada - Texto parcial ingresado por el usuario.
+   * @returns {Promise<Array>} Lista de sugerencias devuelta por el backend.
+   */
+  sugerencias: async (nombreEntrada) => {
+    const response = await apiClient.post('/api/razas/sugerencias', null, {
+      params: { nombreEntrada },
+    });
+
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.sugerencias)) return data.sugerencias;
+    if (Array.isArray(data?.data)) return data.data;
+    if (data && typeof data === 'object' && (data.nombreEn || data.nombreEs || data.nombre_en || data.nombre_es)) {
+      return [data];
+    }
+
+    return [];
+  },
+
     /**
      * Agrega una nueva raza consultando la API externa.
      *

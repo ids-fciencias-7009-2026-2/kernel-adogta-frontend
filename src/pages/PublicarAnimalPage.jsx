@@ -1,10 +1,9 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import AuthLayout from "../layouts/AuthLayout";
 import Button from "../components/common/Button";
 import Input from "../components/common/Input";
 import Checkbox from "../components/common/Checkbox";
 import Slider from "../components/common/Slider";
-import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useAnimalForm } from "../hooks/useAnimalForm";
 import { razaApi } from "../api/razaApi";
 import { NIVEL_LABELS, SLIDERS, MAX_PADECIMIENTOS, MAX_FOTOS } from "../utils/animalFormHelpers";
@@ -21,6 +20,9 @@ export default function PublicarAnimalPage() {
 
   const [paso, setPaso] = useState(1);
   const [busquedaRaza, setBusquedaRaza] = useState("");
+  const [sugerenciasRaza, setSugerenciasRaza] = useState([]);
+  const [cargandoSugerencias, setCargandoSugerencias] = useState(false);
+  const [errorSugerencias, setErrorSugerencias] = useState("");
 
   const {
     form,
@@ -59,6 +61,7 @@ export default function PublicarAnimalPage() {
   const [agregandoRaza, setAgregandoRaza] = useState(false);
   const [errorAgregarRaza, setErrorAgregarRaza] = useState("");
   const [exitoAgregarRaza, setExitoAgregarRaza] = useState("");
+  const [razaInglesSeleccionada, setRazaInglesSeleccionada] = useState("");
 
   // Filtro de razas
   const razasFiltradas = useMemo(() => {
@@ -84,6 +87,9 @@ export default function PublicarAnimalPage() {
     setForm((prev) => ({ ...prev, tipo: "" }));
     setRazaSeleccionada(null);
     setBusquedaRaza("");
+    setNuevaRaza("");
+    setSugerenciasRaza([]);
+    setErrorSugerencias("");
   }
 
   function seleccionarRaza(raza) {
@@ -99,12 +105,64 @@ export default function PublicarAnimalPage() {
     setPaso(3);
   }
 
+  useEffect(() => {
+    const consulta = nuevaRaza.trim();
+
+    if (consulta.length < 2 || agregandoRaza) {
+      setSugerenciasRaza([]);
+      setErrorSugerencias("");
+      setCargandoSugerencias(false);
+      return undefined;
+    }
+
+    let cancelado = false;
+    const timer = setTimeout(async () => {
+      setCargandoSugerencias(true);
+      setErrorSugerencias("");
+
+      try {
+        const resultados = await razaApi.sugerencias(consulta);
+        if (cancelado) return;
+        setSugerenciasRaza(
+          (Array.isArray(resultados) ? resultados : [])
+            .filter((sugerencia) => sugerencia?.nombre_es)
+            .map((sugerencia) => ({
+              ...sugerencia, 
+              nombreEs: sugerencia.nombre_es 
+            }))
+        );
+      } catch (error) {
+        if (cancelado) return;
+        setSugerenciasRaza([]);
+        setErrorSugerencias(error.message || "No pudimos cargar sugerencias.");
+      } finally {
+        if (!cancelado) {
+          setCargandoSugerencias(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+    };
+  }, [nuevaRaza, agregandoRaza]);
+
+  function seleccionarSugerencia(sugerencia) {
+    const valor = sugerencia.nombreEs;
+    setRazaInglesSeleccionada(sugerencia.nombre_en);
+    setNuevaRaza(valor);
+    setSugerenciasRaza([]);
+    setErrorAgregarRaza("");
+    setExitoAgregarRaza("");
+  }
+
   async function agregarRaza() {
     setErrorAgregarRaza("");
     setExitoAgregarRaza("");
+    setErrorSugerencias("");
 
-    const nombreNormalizado = nuevaRaza.toLowerCase().replace(/[^a-z]/g, "");
-    if (nombreNormalizado.length < 3) {
+    if (nuevaRaza.trim().length < 3) {
       setErrorAgregarRaza("La raza que buscas no existe");
       return;
     }
@@ -112,7 +170,8 @@ export default function PublicarAnimalPage() {
     setAgregandoRaza(true);
     try {
       const tipo = tipoSeleccionado === "Perro" ? "perro" : "gato";
-      const respuesta = await razaApi.add({ nombre: nuevaRaza.trim(), tipo });
+      console.log({ nombreEs: nuevaRaza, nombreEn: razaInglesSeleccionada, tipo });
+      const respuesta = await razaApi.add({ nombreEs: nuevaRaza, nombreEn: razaInglesSeleccionada, tipo });
       await recargarRazas();
       setExitoAgregarRaza(`Raza añadida: ${respuesta.nombre}`);
       setNuevaRaza("");
@@ -194,14 +253,50 @@ export default function PublicarAnimalPage() {
           <div className="bg-adogta-white border border-adogta-border rounded-2xl p-5 mb-6 text-center">
             <h3 className="font-semibold text-adogta-primary mb-2">¿No encuentras la raza?</h3>
             <h3 className="text-sm text-adogta-primary/70 mt-4 mb-1"> Nombre de la raza </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-center justify-center ml-4">
-              <Input
-                name="nuevaRaza"
-                value={nuevaRaza}
-                onChange={(e) => setNuevaRaza(e.target.value)}
-                placeholder="Ej: Golden Retriever"
-                disabled={agregandoRaza}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-start justify-center ml-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  name="nuevaRaza"
+                  value={nuevaRaza}
+                  onChange={(e) => setNuevaRaza(e.target.value)}
+                  placeholder="Ej: Golden Retriever"
+                  disabled={agregandoRaza}
+                  className="w-full px-3 py-1.5 text-sm text-adogta-primary bg-white border border-adogta-border rounded-xl outline-none transition-all duration-200 hover:border-adogta-secondary focus:border-adogta-secondary focus:ring-2 focus:ring-adogta-secondary/20 focus:scale-[1.01] disabled:bg-adogta-border disabled:cursor-not-allowed disabled:opacity-70"
+                />
+
+                {cargandoSugerencias && (
+                  <p className="text-xs text-adogta-primary/70 mt-2 px-1">Buscando sugerencias...</p>
+                )}
+
+                {!cargandoSugerencias && errorSugerencias && (
+                  <p className="text-xs text-adogta-secondary mt-2 px-1">{errorSugerencias}</p>
+                )}
+
+                {!cargandoSugerencias && !errorSugerencias && nuevaRaza.trim().length >= 2 && sugerenciasRaza.length > 0 && (
+                  <div className="absolute z-20 mt-2 w-full rounded-xl border border-adogta-border bg-white shadow-lg overflow-hidden">
+                    <div className="max-h-56 overflow-y-auto">
+                      {sugerenciasRaza.map((sugerencia) => (
+                        <button
+                          key={sugerencia.nombreEs}
+                          type="button"
+                          onClick={() => seleccionarSugerencia(sugerencia)}
+                          className="w-full text-left px-4 py-3 hover:bg-adogta-background transition-colors border-b border-adogta-border last:border-b-0"
+                        >
+                          <div className="font-medium text-adogta-primary">{sugerencia.nombreEs}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!cargandoSugerencias && !errorSugerencias && nuevaRaza.trim().length >= 2 && sugerenciasRaza.length === 0 && (
+                  <p className="text-xs text-adogta-primary/60 mt-2 px-1">
+                    No encontramos sugerencias para esa búsqueda.
+                  </p>
+                )}
+              </div>
+
               <div className="flex items-end justify-center">
                 <Button
                   type="button"
